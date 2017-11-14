@@ -1,0 +1,20 @@
+alter table `ParsedDocument` convert to character set utf8 collate utf8_general_ci;
+alter table `DiacOneHotEncoding` convert to character set utf8 collate utf8_general_ci;
+alter table `UnDiacOneHotEncoding` convert to character set utf8 collate utf8_general_ci;
+select DiacritizedCharacter from DiacOneHotEncoding where DiacritizedCharacter="ء";
+select * from ParsedDocument;
+-- SET SQL_SAFE_UPDATES = 0;
+-- delete from ParsedDocument;
+-- delete from EncodedWords;
+-- delete from DiacOneHotEncoding;
+-- delete from UnDiacOneHotEncoding;
+select distinct undiacritizedCharacter from EncodedWords order by undiacritizedCharacter asc;
+select  * from ParsedDocument  where UnDiacritizedCharacter = '.';
+select  * from ParsedDocument  order by idCharacterNumber;
+select  * from DiacOneHotEncoding;
+select  * from UnDiacOneHotEncoding;
+select  * from ListOfWordsAndSentencesInEachDoc;
+select DiacritizedCharacter from DiacOneHotEncoding where DiacritizedCharacter=
+select  distinct idCharacterNumber, SentenceNumber, Word from ParsedDocument order by idCharacterNumber;
+select * from EncodedWords;
+select * from ListOfPurifiedCharacters;
