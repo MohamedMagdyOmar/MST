@@ -53,8 +53,8 @@ last_character_location = 0
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
-worksheet.write(0, 0, 'Expected')
-worksheet.write(0, 1, 'Actual')
+worksheet.write(0, 0, 'Actual')
+worksheet.write(0, 1, 'Expected')
 worksheet.write(0, 2, 'Error Location')
 workbook.close()
 
