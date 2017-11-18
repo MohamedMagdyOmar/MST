@@ -105,7 +105,7 @@ def get_actual_letters(list_of_all_diacritized_letters, neurons_locations_with_h
     list_of_actual_letters_before_sukun_correction = []
     for neuron_location in neurons_locations_with_highest_output:
         # Take care, we make +1 because "neurons_locations_with_highest_output" is zero index
-        list_of_actual_letters_before_sukun_correction.append(list_of_all_diacritized_letters[neuron_location + 1])
+        list_of_actual_letters_before_sukun_correction.append(list_of_all_diacritized_letters[neuron_location - 1])
 
     return list_of_actual_letters_before_sukun_correction
 
