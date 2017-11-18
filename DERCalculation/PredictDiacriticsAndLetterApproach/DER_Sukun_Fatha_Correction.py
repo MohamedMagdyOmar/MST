@@ -70,7 +70,7 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
 
     current_sentence_number = __list_of_sentence_numbers[counter]
     connect_to_db()
-    selected_sentence_query = "select Word from parseddocument where LetterType='testing' and SentenceNumber = " + \
+    selected_sentence_query = "select Word from listofwordsandsentencesineachdoc where SentenceNumber = " + \
                               str(current_sentence_number)
 
     cur.execute(selected_sentence_query)
@@ -78,7 +78,7 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
     current_sentence = cur.fetchall()
     # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
     current_sentence = [eachTuple[0] for eachTuple in current_sentence]
-    current_sentence = [x[0] for x in groupby(current_sentence)]
+    # current_sentence = [x[0] for x in groupby(current_sentence)]
 
     return current_sentence, current_sentence_number
 
