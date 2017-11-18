@@ -9,6 +9,7 @@ import glob
 import unicodedata
 from xlrd import open_workbook
 from xlutils.copy import copy
+from itertools import groupby
 
 total_error = 0
 row_of_letters_excel_file = 0
@@ -62,8 +63,9 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
     cur.execute(selected_sentence_query)
 
     current_sentence = cur.fetchall()
-    current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
+    # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
     current_sentence = [eachTuple[0] for eachTuple in current_sentence]
+    current_sentence = [x[0] for x in groupby(current_sentence)]
 
     return current_sentence, current_sentence_number
 
@@ -128,6 +130,9 @@ def sukun_correction(list_of_actual_letters_before_sukun_correction, list_of_exp
 
     list_of_actual_letters_after_sukun_correction = []
     list_of_expected_letters_after_sukun_correction = []
+
+    if len(list_of_actual_letters_before_sukun_correction) != len(list_of_expected_letters_before_sukun_correction):
+        raise ValueError('bug appeared in "sukun_correction"')
 
     for each_actual_character, each_expected_letter in zip(list_of_actual_letters_before_sukun_correction,
                                                            list_of_expected_letters_before_sukun_correction):
