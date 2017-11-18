@@ -71,7 +71,7 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
 
     current_sentence_number = __list_of_sentence_numbers[counter]
     connect_to_db()
-    selected_sentence_query = "select Word from parseddocument where LetterType='testing' and SentenceNumber = " + \
+    selected_sentence_query = "select Word from listofwordsandsentencesineachdoc where SentenceNumber = " + \
                               str(current_sentence_number)
 
     cur.execute(selected_sentence_query)
@@ -79,7 +79,7 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
     current_sentence = cur.fetchall()
     # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
     current_sentence = [eachTuple[0] for eachTuple in current_sentence]
-    current_sentence = [x[0] for x in groupby(current_sentence)]
+    # current_sentence = [x[0] for x in groupby(current_sentence)]
 
     return current_sentence, current_sentence_number
 
@@ -278,13 +278,15 @@ def reform_word_after_sukun_and_fatha_correction(list_of_chars_with_its_position
 
 
 def get_all_un_words_of_this_sentence_from_db(sentence_number):
-    undiacritized_word_in_selected_sentence_query = "select distinct UnDiacritizedWord from parseddocument where LetterType='testing' and SentenceNumber = " + \
-                              str(sentence_number)
+    undiacritized_word_in_selected_sentence_query = "select UnDiacritizedWord from parseddocument where LetterType='testing' and SentenceNumber = " + \
+                              str(4591 + 414)
 
     cur.execute(undiacritized_word_in_selected_sentence_query)
 
-    undiacritized_word_in_selected_sentence = (cur.fetchall())
-    undiacritized_word_in_selected_sentence = [each_tuple[0] for each_tuple in undiacritized_word_in_selected_sentence]
+    undiacritized_word_in_selected_sentence = cur.fetchall()
+    # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
+    undiacritized_word_in_selected_sentence = [eachTuple[0] for eachTuple in undiacritized_word_in_selected_sentence]
+    undiacritized_word_in_selected_sentence = [x[0] for x in groupby(undiacritized_word_in_selected_sentence)]
 
     return undiacritized_word_in_selected_sentence
 
@@ -294,7 +296,7 @@ def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, lis
     list_of_actual_words_after_dictionary_correction = []
 
     if len(list_of_undiacritized_words) != len(list_of_corrected_diacritized_words):
-        raise ValueError('bug appeared in "sukun_correction"')
+        raise ValueError('bug appeared in "get_diac_version_with_smallest_dist"')
 
     for each_un_diacritized_word, each_corrected_word in zip(list_of_undiacritized_words, list_of_corrected_diacritized_words):
 
@@ -334,7 +336,7 @@ def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, lis
         else:
             list_of_actual_words_after_dictionary_correction.append(each_corrected_word)
 
-
+    x = convert_list_of_words_to_list_of_chars(list_of_actual_words_after_dictionary_correction)
     return convert_list_of_words_to_list_of_chars(list_of_actual_words_after_dictionary_correction)
 
 
@@ -444,6 +446,8 @@ def convert_list_of_words_to_list_of_chars(list_of_words):
             elif found_flag:
                 overall += each_letter
                 comp = unicodedata.normalize('NFC', overall)
+
+    final_list_of_actual_letters_after_post_processing.append(comp)
 
     return final_list_of_actual_letters_after_post_processing
 
