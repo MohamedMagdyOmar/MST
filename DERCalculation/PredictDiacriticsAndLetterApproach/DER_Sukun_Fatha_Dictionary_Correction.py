@@ -300,25 +300,6 @@ def get_all_un_words_of_this_sentence_from_db(sentence_number):
     return list_of_un_diacritized_word
 
 
-def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words_without_numbers):
-
-    listOfUnDiacritizedWord = []
-
-    for word in list_of_extracted_words_without_numbers:
-        if not word in listOfPunctuationSymbols:
-
-            if word.find('.') != -1:
-                word = re.sub('[.]', '', word)
-
-            # word = word.decode('utf-8', 'ignore')
-            nfkd_form = unicodedata.normalize('NFKD', word)
-
-            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
-            listOfUnDiacritizedWord.append(unDiacritizedWord)
-
-    return listOfUnDiacritizedWord
-
-
 def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, list_of_undiacritized_words):
 
     list_of_actual_words_after_dictionary_correction = []
