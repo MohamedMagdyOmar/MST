@@ -11,6 +11,8 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 from copy import deepcopy
 import locale
+from itertools import groupby
+
 
 class LetterPosition:
     letter = "",
@@ -75,8 +77,9 @@ def get_sentence_from_db(counter, __list_of_sentence_numbers):
     cur.execute(selected_sentence_query)
 
     current_sentence = cur.fetchall()
-    current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
+    # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
     current_sentence = [eachTuple[0] for eachTuple in current_sentence]
+    current_sentence = [x[0] for x in groupby(current_sentence)]
 
     return current_sentence, current_sentence_number
 
@@ -142,6 +145,9 @@ def sukun_correction(list_of_actual_letters_before_sukun_correction, list_of_exp
     list_of_actual_letters_after_sukun_correction = []
     list_of_expected_letters_after_sukun_correction = []
 
+    if len(list_of_actual_letters_before_sukun_correction) != len(list_of_expected_letters_before_sukun_correction):
+        raise ValueError('bug appeared in "sukun_correction"')
+
     for each_actual_character, each_expected_letter in zip(list_of_actual_letters_before_sukun_correction,
                                                            list_of_expected_letters_before_sukun_correction):
 
@@ -172,22 +178,7 @@ def get_chars_count_for_each_word_in_current_sentence(sentence):
                 count += 1
         chars_count_of_each_word.append(count)
         count = 0
-    '''
-    list_of_location_of_last_characters_query = "select Word from parseddocument " \
-                                                "where LetterType='testing' and SentenceNumber =" + \
-                                                str(sentence_number) + " order by idCharacterNumber asc"
 
-    cur.execute(list_of_location_of_last_characters_query)
-
-    list_of_required_info = cur.fetchall()
-    list_of_required_info = [each_word[0] for each_word in list_of_required_info]
-    list_of_each_word_in_selected_sentence_and_its_count = [(k, sum(1 for i in g)) for k, g in
-                                                              groupby(list_of_required_info)]
-
-    chars_count_of_each_word = []
-    for each_word in list_of_each_word_in_selected_sentence_and_its_count:
-        chars_count_of_each_word.append(each_word[1])
-    '''
     return chars_count_of_each_word
 
 
@@ -195,6 +186,13 @@ def get_location_of_each_character_in_current_sentence(__list_of_actual_letters,
 
     list_of_actual_letters_with_its_location = []
     i = 0
+
+    sum = 0
+    for each_number in __chars_count_for_each_word_in_current_sentence:
+        sum += each_number
+
+    if sum != len(__list_of_actual_letters):
+        raise ValueError('bug appeared in "get_location_of_each_character_in_current_sentence"')
 
     for count_of_letters in __chars_count_for_each_word_in_current_sentence:
         letter_position_object = LetterPosition()
@@ -295,10 +293,15 @@ def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, lis
 
     list_of_actual_words_after_dictionary_correction = []
 
+    if len(list_of_undiacritized_words) != len(list_of_corrected_diacritized_words):
+        raise ValueError('bug appeared in "sukun_correction"')
+
     for each_un_diacritized_word, each_corrected_word in zip(list_of_undiacritized_words, list_of_corrected_diacritized_words):
+
         minimum_error = 100000000
         dictionary_diacritized_words = get_corresponding_diacritized_versions(each_un_diacritized_word)
         dictionary_diacritized_words_after_sukun_correction = sukun_correction_for_dictionary_words(dictionary_diacritized_words)
+
         if do_we_need_to_search_in_dictionary(dictionary_diacritized_words_after_sukun_correction, each_corrected_word):
 
             error_count = 0
@@ -331,7 +334,8 @@ def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, lis
         else:
             list_of_actual_words_after_dictionary_correction.append(each_corrected_word)
 
-    return list_of_actual_words_after_dictionary_correction
+
+    return convert_list_of_words_to_list_of_chars(list_of_actual_words_after_dictionary_correction)
 
 
 def get_corresponding_diacritized_versions(word):
@@ -364,7 +368,6 @@ def sukun_correction_for_dictionary_words(dictionary_list):
 
 
 def do_we_need_to_search_in_dictionary(dictionary, word):
-    # if any(word == s for s in dictionary):
 
     for each_word in dictionary:
         decomposed_dict, decomposed_act = decompose_word_into_letters(each_word, word)
@@ -379,31 +382,31 @@ def decompose_word_into_letters(word_in_dictionary, actual_word):
     decomposed_dictionary_word = []
     decomposed_actual_word = []
     inter_med_list = []
-    letterFoundFlag = False
+    found_flag = False
     for each_letter in word_in_dictionary:
         if not unicodedata.combining(each_letter):
-            if letterFoundFlag:
+            if found_flag:
                 decomposed_dictionary_word.append(inter_med_list)
             inter_med_list = []
             inter_med_list.append(each_letter)
-            letterFoundFlag = True
+            found_flag = True
 
-        elif letterFoundFlag:
+        elif found_flag:
             inter_med_list.append(each_letter)
     # required because last character will not be added above, but here
     decomposed_dictionary_word.append(inter_med_list)
 
     inter_med_list = []
-    letterFoundFlag = False
+    found_flag = False
     for each_letter in actual_word:
         if not unicodedata.combining(each_letter):
-            if letterFoundFlag:
+            if found_flag:
                 decomposed_actual_word.append(inter_med_list)
             inter_med_list = []
             inter_med_list.append(each_letter)
-            letterFoundFlag = True
+            found_flag = True
 
-        elif letterFoundFlag:
+        elif found_flag:
             inter_med_list.append(each_letter)
             # required because last character will not be added above, but here
     decomposed_actual_word.append(inter_med_list)
@@ -423,6 +426,28 @@ def normalize_words_under_comparison(word_in_dictionary, actual_word):
     return word_in_dictionary, actual_word
 
 
+def convert_list_of_words_to_list_of_chars(list_of_words):
+
+    found_flag = False
+    overall = ""
+    comp = ""
+    final_list_of_actual_letters_after_post_processing = []
+    for each_word in list_of_words:
+        for each_letter in each_word:
+            if not unicodedata.combining(each_letter):
+                if found_flag:
+                    final_list_of_actual_letters_after_post_processing.append(comp)
+
+                overall = each_letter
+                found_flag = True
+                comp = unicodedata.normalize('NFC', overall)
+            elif found_flag:
+                overall += each_letter
+                comp = unicodedata.normalize('NFC', overall)
+
+    return final_list_of_actual_letters_after_post_processing
+
+
 def get_diacritization_error(actual_letters, expected_letters):
     actual_letters_errors = []
     expected_letters_errors = []
@@ -432,10 +457,13 @@ def get_diacritization_error(actual_letters, expected_letters):
     letter_location = 0
     error_locations = []
 
+    if len(actual_letters) != len(expected_letters):
+        raise ValueError('bug appeared in "get_diacritization_error"')
+
     for actual_letters, expected_letter in zip(actual_letters, expected_letters):
         letter_location += 1
-        if actual_letters.letter != expected_letter:
-            actual_letters_errors.append(actual_letters.letter)
+        if actual_letters != expected_letter:
+            actual_letters_errors.append(actual_letters)
             expected_letters_errors.append(expected_letter)
             error_locations.append(letter_location)
             number_of_diacritization_errors += 1
@@ -520,11 +548,13 @@ if __name__ == "__main__":
         list_of_words_in_sent_after_sukun_and_fatha_correction = reform_word_after_sukun_and_fatha_correction(actual_letters_after_sukun_and_fatha_correction)
 
         connect_to_db()
+
         list_of_undiacritized_words_in_current_sentence = get_all_un_words_of_this_sentence_from_db(sentence_number)
-        list_of_words_in_sent_after_sukun_fatha_and_dict_correction = get_diac_version_with_smallest_dist(list_of_words_in_sent_after_sukun_and_fatha_correction, list_of_undiacritized_words_in_current_sentence)
+
+        list_of_chars_in_sent_after_sukun_fatha_and_dict_correction = get_diac_version_with_smallest_dist(list_of_words_in_sent_after_sukun_and_fatha_correction, list_of_undiacritized_words_in_current_sentence)
 
         list_of_actual_letters_errors, list_of_expected_letters_errors, list_of_error_locations = \
-            get_diacritization_error(list_of_words_in_sent_after_sukun_fatha_and_dict_correction, expected_letters_after_sukun_correction)
+            get_diacritization_error(list_of_chars_in_sent_after_sukun_fatha_and_dict_correction, expected_letters_after_sukun_correction)
 
         write_data_into_excel_file(list_of_actual_letters_errors, list_of_expected_letters_errors,
                                    list_of_error_locations, selected_sentence)
