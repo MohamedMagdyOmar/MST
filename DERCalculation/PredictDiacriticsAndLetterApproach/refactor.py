@@ -8,44 +8,29 @@ import os
 import glob
 import unicodedata
 from xlrd import open_workbook
-from itertools import groupby
 from xlutils.copy import copy
-import locale
-
-final_list_of_actual_letters_after_post_processing = []
-final_list_of_word = []
-rnn_output_for_one_seq = []
-neurons_locations_with_highest_output_for_a_seq = []
-list_of_all_diacritized_letters = []
-
-list_of_actual_letters_before_sukun_correction = []
-list_of_expected_letters_before_sukun_correction = []
-
-dictionary_correction_list = []
-
-list_of_actual_letters = []
-list_of_expected_letters = []
-list_of_testing_words = []
-list_of_actual_letters_errors = []
-list_of_expected_letters_errors = []
+from copy import deepcopy
 
 
-# letters_of_fatha_correction = [u'ة', u'ا', u'ى']
-letters_of_fatha_correction = [u'ة', u'ى']
-locations_of_fatha_correction_letters = []
-list_of_location_types = []
+class LetterPosition:
+    letter = "",
+    location = ""
+
+    def __init__(self):
+        self.letter = ""
+        self.location = ""
+
+letters_of_fatha_correction = [u'ة', u'ا', u'ى']
+# letters_of_fatha_correction = [u'ة', u'ى']
+
 total_error = 0
-sentence_number = 0
-
 row_of_letters_excel_file = 0
+current_row_in_excel_file = 1
+extension = 'csv'
 
 path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample'
 diacritization_error_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors" \
                                        "\Book1.xls "
-extension = 'csv'
-
-row_of_errors_excel_file = 1
-last_character_location = 0
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
@@ -133,7 +118,7 @@ def get_actual_letters(list_of_all_diacritized_letters, neurons_locations_with_h
     list_of_actual_letters_before_sukun_correction = []
     for neuron_location in neurons_locations_with_highest_output:
         # Take care, we make +1 because "neurons_locations_with_highest_output" is zero index
-        list_of_actual_letters_before_sukun_correction.append(list_of_all_diacritized_letters[neuron_location + 1])
+        list_of_actual_letters_before_sukun_correction.append(list_of_all_diacritized_letters[neuron_location - 1])
 
     return list_of_actual_letters_before_sukun_correction
 
@@ -209,43 +194,33 @@ def get_chars_count_for_each_word_in_current_sentence(sentence):
 def get_location_of_each_character_in_current_sentence(__list_of_actual_letters, __chars_count_for_each_word_in_current_sentence):
 
     list_of_actual_letters_with_its_location = []
-    intermediate_list = []
-    first_time = True
-    counter = 1
+    i = 0
 
-    for each_letter, each_index in zip(__list_of_actual_letters, __chars_count_for_each_word_in_current_sentence):
+    for count_of_letters in __chars_count_for_each_word_in_current_sentence:
+        letter_position_object = LetterPosition()
+        for x in range(0, count_of_letters):
+            if count_of_letters == 1:
+                letter_position_object.letter = __list_of_actual_letters[i]
+                letter_position_object.location = 'firstOneLetter'
+                list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
-        if each_index == 1:
-            intermediate_list.append(each_letter)
-            intermediate_list.append('firstOneLetter')
-            list_of_actual_letters_with_its_location.append(intermediate_list)
-            intermediate_list = []
-            counter = 1
+            else:
+                if x == 0:
+                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.location = 'first'
+                    list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
-        else:
+                elif x == (count_of_letters - 1):
+                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.location = 'last'
+                    list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
-            if first_time:
-                intermediate_list.append(each_letter)
-                intermediate_list.append('first')
-                list_of_actual_letters_with_its_location.append(intermediate_list)
-                intermediate_list = []
-                first_time = False
-                counter += 1
-            elif counter < each_index:
-                intermediate_list.append(each_letter)
-                intermediate_list.append('middle')
-                list_of_actual_letters_with_its_location.append(intermediate_list)
-                intermediate_list = []
-                first_time = False
-                counter += 1
+                else:
+                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.location = 'middle'
+                    list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
-            elif counter == each_index:
-                intermediate_list.append(each_letter)
-                intermediate_list.append('last')
-                list_of_actual_letters_with_its_location.append(intermediate_list)
-                intermediate_list = []
-                first_time = True
-                counter = 1
+            i += 1
 
     return list_of_actual_letters_with_its_location
 
@@ -254,31 +229,31 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
     counter = 0
     actual_letters_after_fatha_correction = []
 
-    for each_letter in __list_of_actual_letters_with_its_location:
-        actual_letters_after_fatha_correction.append((each_letter[0]))
-        if ((each_letter[0]) in letters_of_fatha_correction) and (each_letter[1] != 'first'):
+    for each_letter_object in __list_of_actual_letters_with_its_location:
+        actual_letters_after_fatha_correction.append((each_letter_object))
+        if ((each_letter_object.letter) in letters_of_fatha_correction) and (each_letter_object.location != 'first'):
 
             # get prev char
-            spaChar = unicodedata.normalize('NFC', ((__list_of_actual_letters_with_its_location[counter - 1])[0]))
+            spaChar = unicodedata.normalize('NFC', ((__list_of_actual_letters_with_its_location[counter - 1]).letter))
             for c in spaChar:
                 if not unicodedata.combining(c):
                     overall = c
                     comp = unicodedata.normalize('NFC', c)
-                    actual_letters_after_fatha_correction[counter - 1] = comp
+                    actual_letters_after_fatha_correction[counter - 1].letter = comp
 
                 elif c == u'َ' or c == u'ّ' or c == u'ً':
                     overall += c
                     comp = unicodedata.normalize('NFC', overall)
-                    actual_letters_after_fatha_correction[counter - 1] = comp
+                    actual_letters_after_fatha_correction[counter - 1].letter = comp
 
                 else:
-                    if each_letter[1] == 'middle':
+                    if each_letter_object.location == 'middle':
                         c = u'َ'
-                    elif each_letter[1] == 'last':
+                    elif each_letter_object.location == 'last':
                         c = u'ً'
                     overall += c
                     comp = unicodedata.normalize('NFC', overall)
-                    actual_letters_after_fatha_correction[counter - 1] = comp
+                    actual_letters_after_fatha_correction[counter - 1].letter = comp
             counter += 1
         else:
             counter += 1
@@ -288,75 +263,80 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
     return actual_letters_after_fatha_correction
 
 
-def reform_word_after_sukun_and_fatha_correction(list_of_chars):
+def reform_word_after_sukun_and_fatha_correction(list_of_chars_with_its_position):
+    list_of_words = []
+    word = ""
+    for each_char_object in list_of_chars_with_its_position:
+        if each_char_object.location == 'firstOneLetter':
+            list_of_words.append(each_char_object.letter)
+        elif each_char_object.location != 'last':
+            word += each_char_object.letter
+        elif each_char_object.location == 'last':
+            word += each_char_object.letter
+            list_of_words.append(word)
+            word = ""
 
-    
+    return list_of_words
 
 
-
-def get_diacritization_error():
-    global list_of_actual_letters_errors
-    global list_of_expected_letters_errors
+def get_diacritization_error(actual_letters, expected_letters):
+    actual_letters_errors = []
+    expected_letters_errors = []
     global total_error
 
     number_of_diacritization_errors = 0
-    counter = 0
     letter_location = 0
-    list_of_error_locations = []
-    for letter in final_list_of_actual_letters:
-    #uncommnet below line and comment above line if dictionary correction is needed
-    #for letter in final_list_of_actual_letters_after_post_processing:
-        letter_location += 1
-        #if (letter[0] != (list_of_expected_letters[counter])[0]):# and (not(letter_location in location_of_last_character)):
-        if (letter != (list_of_expected_letters[counter])[0]):
-            list_of_actual_letters_errors.append(letter)
-            list_of_expected_letters_errors.append(list_of_expected_letters[counter])
-            list_of_error_locations.append(letter_location)
-            number_of_diacritization_errors += 1
+    error_locations = []
 
-        counter += 1
+    for actual_letters, expected_letter in zip(actual_letters, expected_letters):
+        letter_location += 1
+        if actual_letters.letter != expected_letter:
+            actual_letters_errors.append(actual_letters.letter)
+            expected_letters_errors.append(expected_letter)
+            error_locations.append(letter_location)
+            number_of_diacritization_errors += 1
 
     total_error += number_of_diacritization_errors
 
-    print number_of_diacritization_errors
-    print 'total error: ', total_error
+    print 'total error in this sentence', number_of_diacritization_errors
+    print 'total error in all sentences: ', total_error
 
+    return actual_letters_errors, expected_letters_errors, error_locations
+
+
+def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence):
     wb = open_workbook(diacritization_error_excel_file_path)
     w = copy(wb)
     worksheet = w.get_sheet(0)
 
-    global row_of_errors_excel_file
-    row_of_errors_excel_file += 1
-
+    global current_row_in_excel_file
+    current_row_in_excel_file += 1
     column = 0
-    i = 0
-    for expected_letter, actual_letter in zip(list_of_expected_letters_errors, list_of_actual_letters_errors):
-        worksheet.write(row_of_errors_excel_file, column, expected_letter[0])
+
+    for actual_letter, expected_letter, location in \
+            zip(actual_letters_errors, expected_letters_errors, error_locations):
+
+        worksheet.write(current_row_in_excel_file, column, actual_letter)
 
         column = 1
-        worksheet.write(row_of_errors_excel_file, column, actual_letter)
+        worksheet.write(current_row_in_excel_file, column, expected_letter)
 
         column = 2
-        worksheet.write(row_of_errors_excel_file, column, list_of_error_locations[i])
+        worksheet.write(current_row_in_excel_file, column, location)
 
-        i += 1
-        row_of_errors_excel_file += 1
+        current_row_in_excel_file += 1
         column = 0
 
     all_sentence = ''
     for each_word in current_sentence:
-        all_sentence += each_word[0] + ' '
+        all_sentence += each_word + ' '
 
-    worksheet.write(row_of_errors_excel_file, column, all_sentence)
+    worksheet.write(current_row_in_excel_file, column, all_sentence)
 
-    row_of_errors_excel_file += 1
+    current_row_in_excel_file += 1
 
     w.save(diacritization_error_excel_file_path)
-
     workbook.close()
-
-    list_of_actual_letters_errors = []
-    list_of_expected_letters_errors = []
 
 
 if __name__ == "__main__":
@@ -369,24 +349,38 @@ if __name__ == "__main__":
 
     for file_name in result:
         selected_sentence, sentence_number = get_sentence_from_db(current_sentence_counter, list_of_sentence_numbers)
+
         rnn_output_for_one_seq = read_csv_file_of_a_predicted_sentence(file_name)
+
         neurons_locations_with_highest_output_for_a_seq = \
             get_neurons_numbers_with_highest_output_value(rnn_output_for_one_seq)
+
         connect_to_db()
+
         list_of_diacritized_letters = get_all_letters_from_db()
+
         actual_letters_before_sukun_correction = get_actual_letters(list_of_diacritized_letters,
                                                                     neurons_locations_with_highest_output_for_a_seq)
+
         expected_letters_before_sukun_correction = get_expected_letters(sentence_number)
+
         actual_letters_after_sukun_correction, expected_letters_after_sukun_correction = \
             sukun_correction(actual_letters_before_sukun_correction, expected_letters_before_sukun_correction)
+
         chars_count_for_each_word_in_current_sentence = get_chars_count_for_each_word_in_current_sentence(selected_sentence)
+
         location_of_each_char = get_location_of_each_character_in_current_sentence(actual_letters_after_sukun_correction, chars_count_for_each_word_in_current_sentence)
 
-        actual_letters_after_fatha_correction = fatha_correction(location_of_each_char)
-        reform_word_after_sukun_and_fatha_correction(actual_letters_after_fatha_correction)
+        actual_letters_after_sukun_and_fatha_correction = fatha_correction(location_of_each_char)
 
-        # write_data_into_excel_file('D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Book2.xlsx')
-        get_diacritization_error()
-        currentSentence += 1
-        print 'sentence number: ', currentSentence
-        sentence_number += 1
+        list_of_words_in_sent_after_sukun_and_fatha_correction = reform_word_after_sukun_and_fatha_correction(actual_letters_after_sukun_and_fatha_correction)
+
+        list_of_actual_letters_errors, list_of_expected_letters_errors, list_of_error_locations = \
+            get_diacritization_error(actual_letters_after_sukun_and_fatha_correction, expected_letters_after_sukun_correction)
+
+        write_data_into_excel_file(list_of_actual_letters_errors, list_of_expected_letters_errors,
+                                   list_of_error_locations, selected_sentence)
+
+        current_sentence_counter += 1
+        print 'sentence number: ', current_sentence_counter
+

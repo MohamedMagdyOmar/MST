@@ -12,14 +12,12 @@ from xlutils.copy import copy
 
 total_error = 0
 row_of_letters_excel_file = 0
-first_time = True
+current_row_in_excel_file = 1
+extension = 'csv'
 
 path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample'
 diacritization_error_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors" \
                                        "\Book1.xls "
-extension = 'csv'
-
-current_row_in_excel_file = 1
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
