@@ -278,17 +278,45 @@ def reform_word_after_sukun_and_fatha_correction(list_of_chars_with_its_position
 
 
 def get_all_un_words_of_this_sentence_from_db(sentence_number):
-    undiacritized_word_in_selected_sentence_query = "select UnDiacritizedWord from parseddocument where LetterType='testing' and SentenceNumber = " + \
-                              str(4591 + 414)
+    #undiacritized_word_in_selected_sentence_query = "select UnDiacritizedWord from parseddocument where LetterType='testing' and SentenceNumber = " + \
+    #                          str(4591 + 414)
+
+    undiacritized_word_in_selected_sentence_query = "select Word from listofwordsandsentencesineachdoc where SentenceNumber = " + \
+                              str(sentence_number)
 
     cur.execute(undiacritized_word_in_selected_sentence_query)
 
     undiacritized_word_in_selected_sentence = cur.fetchall()
     # current_sentence = sorted(set(current_sentence), key=lambda x: current_sentence.index(x))
     undiacritized_word_in_selected_sentence = [eachTuple[0] for eachTuple in undiacritized_word_in_selected_sentence]
-    undiacritized_word_in_selected_sentence = [x[0] for x in groupby(undiacritized_word_in_selected_sentence)]
+    #undiacritized_word_in_selected_sentence = [x[0] for x in groupby(undiacritized_word_in_selected_sentence)]
 
-    return undiacritized_word_in_selected_sentence
+    list_of_un_diacritized_word = []
+    for each_word in undiacritized_word_in_selected_sentence:
+        nfkd_form = unicodedata.normalize('NFKD', each_word)
+        unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
+        list_of_un_diacritized_word.append(unDiacritizedWord)
+
+    return list_of_un_diacritized_word
+
+
+def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words_without_numbers):
+
+    listOfUnDiacritizedWord = []
+
+    for word in list_of_extracted_words_without_numbers:
+        if not word in listOfPunctuationSymbols:
+
+            if word.find('.') != -1:
+                word = re.sub('[.]', '', word)
+
+            # word = word.decode('utf-8', 'ignore')
+            nfkd_form = unicodedata.normalize('NFKD', word)
+
+            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
+            listOfUnDiacritizedWord.append(unDiacritizedWord)
+
+    return listOfUnDiacritizedWord
 
 
 def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, list_of_undiacritized_words):
