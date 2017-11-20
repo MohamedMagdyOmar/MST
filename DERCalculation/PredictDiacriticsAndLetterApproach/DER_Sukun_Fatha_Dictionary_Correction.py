@@ -11,7 +11,6 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 from copy import deepcopy
 import locale
-from itertools import groupby
 
 
 class LetterPosition:
@@ -27,7 +26,10 @@ letters_of_fatha_correction = [u'ة', u'ا', u'ى']
 
 total_error = 0
 total_error_without_last_letter = 0
-row_of_letters_excel_file = 0
+
+current_row_excel_1 = 0
+current_row_excel_2 = 0
+
 current_row_in_excel_file = 1
 extension = 'csv'
 
@@ -51,6 +53,7 @@ worksheet2.write(0, 0, 'Actual')
 worksheet2.write(0, 1, 'Expected')
 worksheet2.write(0, 2, 'Error Location')
 workbook2.close()
+
 
 def connect_to_db():
     db = MySQLdb.connect(host="127.0.0.1",  # your host, usually localhost
@@ -532,12 +535,12 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
     return actual_letters_errors, expected_letters_errors, error_locations
 
 
-def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence, diacritization_error_excel_file_path):
+def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence, diacritization_error_excel_file_path, current_row_in_excel_file):
     wb = open_workbook(diacritization_error_excel_file_path)
     w = copy(wb)
     worksheet = w.get_sheet(0)
 
-    global current_row_in_excel_file
+    # global current_row_in_excel_file
     current_row_in_excel_file += 1
     column = 0
 
@@ -565,6 +568,8 @@ def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, e
 
     w.save(diacritization_error_excel_file_path)
     workbook.close()
+
+    return current_row_in_excel_file
 
 
 if __name__ == "__main__":
@@ -620,31 +625,30 @@ if __name__ == "__main__":
         # end of get character position
 
         # DER Calculation
-        list_of_actual_letters_errors,\
-        list_of_expected_letters_errors,\
-        list_of_error_locations = \
+        list_of_actual_letters_errors, list_of_expected_letters_errors, list_of_error_locations = \
             get_diacritization_error(list_of_chars_in_sent_after_sukun_fatha_and_dict_correction,
                                      expected_letters_after_sukun_correction)
 
         list_of_actual_letters_errors_for_DER_without_last_letter, \
-        list_of_expected_letters_errors_for_DER_without_last_letter, \
+        list_of_expected_letters_errors_for_DER_without_last_letter,\
         list_of_error_locations_for_DER_without_last_letter = \
             get_diacritization_error_without_counting_last_letter(
                 location_of_each_char_for_actual_op,
                 location_of_each_char_for_expected_op)
         # End DER Calculation
 
-        write_data_into_excel_file(list_of_actual_letters_errors,
-                                   list_of_expected_letters_errors,
-                                   list_of_error_locations,
-                                   selected_sentence,
-                                   diacritization_error_excel_file_path)
+        excel1 = current_row_excel_1
+        current_row_excel_1 = write_data_into_excel_file(list_of_actual_letters_errors, list_of_expected_letters_errors,
+                                                         list_of_error_locations, selected_sentence,
+                                                         diacritization_error_excel_file_path, excel1)
 
-        write_data_into_excel_file(list_of_actual_letters_errors_for_DER_without_last_letter,
-                                   list_of_expected_letters_errors_for_DER_without_last_letter,
-                                   list_of_error_locations_for_DER_without_last_letter,
-                                   selected_sentence,
-                                   diacritization_error_without_last_letter_excel_file_path)
+        excel2 = current_row_excel_2
+        current_row_excel_2 = write_data_into_excel_file(list_of_actual_letters_errors_for_DER_without_last_letter,
+                                                         list_of_expected_letters_errors_for_DER_without_last_letter,
+                                                         list_of_error_locations_for_DER_without_last_letter,
+                                                         selected_sentence,
+                                                         diacritization_error_without_last_letter_excel_file_path,
+                                                         excel2)
 
         current_sentence_counter += 1
         print 'sentence number: ', current_sentence_counter
