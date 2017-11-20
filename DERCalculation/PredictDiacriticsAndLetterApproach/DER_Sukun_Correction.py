@@ -10,14 +10,15 @@ import unicodedata
 from xlrd import open_workbook
 from xlutils.copy import copy
 from copy import deepcopy
-from itertools import groupby
+
 
 total_error = 0
 total_error_without_last_letter = 0
+current_row_excel_1 = 0
+current_row_excel_2 = 0
 
-row_of_letters_excel_file = 0
-current_row_in_excel_file = 1
 extension = 'csv'
+
 
 class LetterPosition:
     letter = "",
@@ -31,8 +32,8 @@ path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample'
 diacritization_error_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors" \
                                        "\Book1.xls "
 
-diacritization_error_without_last_letter_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors" \
-                                       "\Book2.xls "
+diacritization_error_without_last_letter_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\
+                                                        ArabicDiacritizationExample\Errors\Book2.xls"
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
@@ -189,36 +190,37 @@ def get_chars_count_for_each_word_in_current_sentence(sentence):
     return chars_count_of_each_word
 
 
-def get_location_of_each_character_in_current_sentence(__list_of_actual_letters, __chars_count_for_each_word_in_current_sentence):
+def get_location_of_each_character_in_current_sentence(__list_of_actual_letters,
+                                                       __chars_count_for_each_word_in_current_sentence):
 
     list_of_actual_letters_with_its_location = []
-    i = 0
+    counter = 0
 
     for count_of_letters in __chars_count_for_each_word_in_current_sentence:
         letter_position_object = LetterPosition()
         for x in range(0, count_of_letters):
             if count_of_letters == 1:
-                letter_position_object.letter = __list_of_actual_letters[i]
+                letter_position_object.letter = __list_of_actual_letters[counter]
                 letter_position_object.location = 'firstOneLetter'
                 list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
             else:
                 if x == 0:
-                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.letter = __list_of_actual_letters[counter]
                     letter_position_object.location = 'first'
                     list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
                 elif x == (count_of_letters - 1):
-                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.letter = __list_of_actual_letters[counter]
                     letter_position_object.location = 'last'
                     list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
                 else:
-                    letter_position_object.letter = __list_of_actual_letters[i]
+                    letter_position_object.letter = __list_of_actual_letters[counter]
                     letter_position_object.location = 'middle'
                     list_of_actual_letters_with_its_location.append(deepcopy(letter_position_object))
 
-            i += 1
+            counter += 1
 
     return list_of_actual_letters_with_its_location
 
@@ -284,14 +286,17 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
     return actual_letters_errors, expected_letters_errors, error_locations
 
 
-def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence, diacritization_error_excel_file_path):
+def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence,
+                               diacritization_error_excel_file_path, current_row_in_excel_file):
     wb = open_workbook(diacritization_error_excel_file_path)
     w = copy(wb)
     worksheet = w.get_sheet(0)
 
-    global current_row_in_excel_file
     current_row_in_excel_file += 1
     column = 0
+
+    if len(actual_letters_errors) != len(expected_letters_errors) != len(error_locations):
+        raise ValueError("Bug Found in 'write_data_into_excel_file'")
 
     for actual_letter, expected_letter, location in \
             zip(actual_letters_errors, expected_letters_errors, error_locations):
@@ -314,9 +319,10 @@ def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, e
     worksheet.write(current_row_in_excel_file, column, all_sentence)
 
     current_row_in_excel_file += 1
-
     w.save(diacritization_error_excel_file_path)
     workbook.close()
+
+    return current_row_in_excel_file
 
 
 if __name__ == "__main__":
@@ -362,31 +368,30 @@ if __name__ == "__main__":
         # end of get character position
 
         # DER Calculation
-        list_of_actual_letters_errors,\
-        list_of_expected_letters_errors,\
-        list_of_error_locations = \
+        list_of_actual_letters_errors, list_of_expected_letters_errors, list_of_error_locations = \
             get_diacritization_error(location_of_each_char_for_actual_op,
                                      expected_letters_after_sukun_correction)
 
-        list_of_actual_letters_errors_for_DER_without_last_letter, \
-        list_of_expected_letters_errors_for_DER_without_last_letter, \
+        list_of_actual_letters_errors_for_DER_without_last_letter,\
+        list_of_expected_letters_errors_for_DER_without_last_letter,\
         list_of_error_locations_for_DER_without_last_letter = \
             get_diacritization_error_without_counting_last_letter(
                 location_of_each_char_for_actual_op,
                 location_of_each_char_for_expected_op)
         # End DER Calculation
+        excel1 = current_row_excel_1
+        current_row_excel_1 = write_data_into_excel_file(list_of_actual_letters_errors, list_of_expected_letters_errors,
+                                                         list_of_error_locations,
+                                                         selected_sentence, diacritization_error_excel_file_path,
+                                                         excel1)
 
-        write_data_into_excel_file(list_of_actual_letters_errors,
-                                   list_of_expected_letters_errors,
-                                   list_of_error_locations,
-                                   selected_sentence,
-                                   diacritization_error_excel_file_path)
-
-        write_data_into_excel_file(list_of_actual_letters_errors_for_DER_without_last_letter,
-                                   list_of_expected_letters_errors_for_DER_without_last_letter,
-                                   list_of_error_locations_for_DER_without_last_letter,
-                                   selected_sentence,
-                                   diacritization_error_without_last_letter_excel_file_path)
+        excel2 = current_row_excel_2
+        current_row_excel_2 = write_data_into_excel_file(list_of_actual_letters_errors_for_DER_without_last_letter,
+                                                         list_of_expected_letters_errors_for_DER_without_last_letter,
+                                                         list_of_error_locations_for_DER_without_last_letter,
+                                                         selected_sentence,
+                                                         diacritization_error_without_last_letter_excel_file_path,
+                                                         excel2)
 
         current_sentence_counter += 1
         print 'sentence number: ', current_sentence_counter
