@@ -23,6 +23,8 @@ class LetterPosition:
 
 total_error = 0
 total_error_without_last_letter = 0
+total_chars_including_un_diacritized_target_letter = 0
+total_chars_not_including_un_diacritized_target_letter = 0
 
 current_row_excel_1 = 0
 current_row_excel_2 = 0
@@ -283,6 +285,10 @@ def get_diac_version_with_smallest_dist(list_of_corrected_diacritized_words, lis
 
         minimum_error = 100000000
         dictionary_diacritized_words = get_corresponding_diacritized_versions(each_un_diacritized_word)
+
+        if len(dictionary_diacritized_words) == 0:
+            dictionary_diacritized_words.append(each_corrected_word)
+
         dictionary_diacritized_words_after_sukun_correction = sukun_correction_for_dictionary_words(dictionary_diacritized_words)
 
         if do_we_need_to_search_in_dictionary(dictionary_diacritized_words_after_sukun_correction, each_corrected_word):
@@ -437,6 +443,8 @@ def get_diacritization_error(actual_letters, expected_letters):
     actual_letters_errors = []
     expected_letters_errors = []
     global total_error
+    global total_chars_including_un_diacritized_target_letter
+    global total_chars_not_including_un_diacritized_target_letter
 
     number_of_diacritization_errors = 0
     letter_location = 0
@@ -446,12 +454,16 @@ def get_diacritization_error(actual_letters, expected_letters):
         raise ValueError('bug appeared in "get_diacritization_error"')
 
     for actual_letters, expected_letter in zip(actual_letters, expected_letters):
+        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter)
         letter_location += 1
-        if actual_letters != expected_letter:
-            actual_letters_errors.append(actual_letters)
-            expected_letters_errors.append(expected_letter)
-            error_locations.append(letter_location)
-            number_of_diacritization_errors += 1
+        total_chars_including_un_diacritized_target_letter += 1
+        if len(decomposed_expected_letter) > 1:
+            total_chars_not_including_un_diacritized_target_letter += 1
+            if actual_letters != expected_letter:
+                actual_letters_errors.append(actual_letters)
+                expected_letters_errors.append(expected_letter)
+                error_locations.append(letter_location)
+                number_of_diacritization_errors += 1
 
     total_error += number_of_diacritization_errors
 
@@ -476,13 +488,15 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         if actual_letter.location != 'last' and expected_letter.location != 'last':
+            decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
                 letter_location += 1
-                if actual_letter.letter != expected_letter.letter:
-                    actual_letters_errors.append(actual_letter.letter)
-                    expected_letters_errors.append(expected_letter.letter)
-                    error_locations.append(letter_location)
-                    number_of_diacritization_errors += 1
+                if len(decomposed_expected_letter) > 1:
+                    if actual_letter.letter != expected_letter.letter:
+                        actual_letters_errors.append(actual_letter.letter)
+                        expected_letters_errors.append(expected_letter.letter)
+                        error_locations.append(letter_location)
+                        number_of_diacritization_errors += 1
             else:
                 raise ValueError('bug appeared in "get_diacritization_error_without_counting_last_letter"')
 
@@ -492,6 +506,14 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
     print 'total error in all sentences: ', total_error_without_last_letter
 
     return actual_letters_errors, expected_letters_errors, error_locations
+
+
+def decompose_letter_into_chars_and_diacritics(expected_letter):
+    decomposed_letter = []
+    for each_letter in expected_letter:
+        decomposed_letter.append(each_letter)
+
+    return decomposed_letter
 
 
 def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence, diacritization_error_excel_file_path, current_row_in_excel_file):
@@ -612,3 +634,5 @@ if __name__ == "__main__":
         current_sentence_counter += 1
         print 'sentence number: ', current_sentence_counter
 
+    print "Total Chars Not Including Undiacritized Target Letter: ", total_chars_not_including_un_diacritized_target_letter
+    print "Total Chars Including Undiacritized Target Letter: ", total_chars_including_un_diacritized_target_letter
