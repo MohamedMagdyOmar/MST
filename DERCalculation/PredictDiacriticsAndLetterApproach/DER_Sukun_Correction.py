@@ -11,11 +11,12 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 from copy import deepcopy
 
-
 total_error = 0
 total_error_without_last_letter = 0
 current_row_excel_1 = 0
 current_row_excel_2 = 0
+total_chars_including_un_diacritized_target_letter = 0
+total_chars_not_including_un_diacritized_target_letter = 0
 
 extension = 'csv'
 
@@ -28,18 +29,32 @@ class LetterPosition:
         self.letter = ""
         self.location = ""
 
+
+class ErrorDetails:
+    actual_letter = "",
+    expected_letter = "",
+    error_location = 0,
+    word = ""
+
+    def __init__(self):
+        self.actual_letter = ""
+        self.expected_letter = ""
+        self.error_location = 0
+        self.word = ""
+
+
 path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample'
 diacritization_error_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors" \
                                        "\Book1.xls "
 
-diacritization_error_without_last_letter_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\
-                                                        ArabicDiacritizationExample\Errors\Book2.xls"
+diacritization_error_without_last_letter_excel_file_path = "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors\Book2.xls"
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
 worksheet.write(0, 0, 'Actual')
 worksheet.write(0, 1, 'Expected')
 worksheet.write(0, 2, 'Error Location')
+worksheet.write(0, 3, 'word contain error')
 workbook.close()
 
 workbook2 = xlsxwriter.Workbook(diacritization_error_without_last_letter_excel_file_path)
@@ -47,6 +62,7 @@ worksheet2 = workbook2.add_worksheet()
 worksheet2.write(0, 0, 'Actual')
 worksheet2.write(0, 1, 'Expected')
 worksheet2.write(0, 2, 'Error Location')
+worksheet2.write(0, 3, 'word contain error')
 workbook2.close()
 
 
@@ -64,7 +80,7 @@ def connect_to_db():
 
 
 def get_list_of_sentence_numbers():
-    sentence_number_of_testing_query = "select distinct SentenceNumber from parseddocument where LetterType='testing' "\
+    sentence_number_of_testing_query = "select distinct SentenceNumber from parseddocument where LetterType='testing' " \
                                        "order by idCharacterNumber asc "
 
     cur.execute(sentence_number_of_testing_query)
@@ -76,7 +92,6 @@ def get_list_of_sentence_numbers():
 
 
 def get_sentence_from_db(counter, __list_of_sentence_numbers):
-
     current_sentence_number = __list_of_sentence_numbers[counter]
     connect_to_db()
     selected_sentence_query = "select Word from listofwordsandsentencesineachdoc where SentenceNumber = " + \
@@ -125,7 +140,6 @@ def get_all_letters_from_db():
 
 
 def get_actual_letters(list_of_all_diacritized_letters, neurons_locations_with_highest_output):
-
     list_of_actual_letters_before_sukun_correction = []
     for neuron_location in neurons_locations_with_highest_output:
         # Take care, we make +1 because "neurons_locations_with_highest_output" is zero index
@@ -135,7 +149,6 @@ def get_actual_letters(list_of_all_diacritized_letters, neurons_locations_with_h
 
 
 def get_expected_letters(__sentence_number):
-
     list_of_expected_diacritized_letters_query = "select DiacritizedCharacter from parseddocument where " \
                                                  "LetterType='testing' and SentenceNumber = " + str(__sentence_number)
 
@@ -149,7 +162,6 @@ def get_expected_letters(__sentence_number):
 
 
 def sukun_correction(list_of_actual_letters_before_sukun_correction, list_of_expected_letters_before_sukun_correction):
-
     list_of_actual_letters_after_sukun_correction = []
     list_of_expected_letters_after_sukun_correction = []
 
@@ -158,7 +170,6 @@ def sukun_correction(list_of_actual_letters_before_sukun_correction, list_of_exp
 
     for each_actual_character, each_expected_letter in zip(list_of_actual_letters_before_sukun_correction,
                                                            list_of_expected_letters_before_sukun_correction):
-
         list_of_actual_letters_after_sukun_correction.append(remove_sukun_diacritics_if_exists(each_actual_character))
         list_of_expected_letters_after_sukun_correction.append(remove_sukun_diacritics_if_exists(each_expected_letter))
 
@@ -177,7 +188,6 @@ def remove_sukun_diacritics_if_exists(letter):
 
 
 def get_chars_count_for_each_word_in_current_sentence(sentence):
-
     count = 0
     chars_count_of_each_word = []
     for each_word in sentence:
@@ -192,7 +202,6 @@ def get_chars_count_for_each_word_in_current_sentence(sentence):
 
 def get_location_of_each_character_in_current_sentence(__list_of_actual_letters,
                                                        __chars_count_for_each_word_in_current_sentence):
-
     list_of_actual_letters_with_its_location = []
     counter = 0
 
@@ -225,68 +234,104 @@ def get_location_of_each_character_in_current_sentence(__list_of_actual_letters,
     return list_of_actual_letters_with_its_location
 
 
-def get_diacritization_error(actual_letters, expected_letters):
-    actual_letters_errors = []
-    expected_letters_errors = []
+def get_diacritization_error(actual_letters, expected_letters, sentence):
+
+    list_of_object_error = []
+
     global total_error
+    global total_chars_including_un_diacritized_target_letter
+    global total_chars_not_including_un_diacritized_target_letter
 
     number_of_diacritization_errors = 0
     letter_location = 0
-    error_locations = []
 
     if len(actual_letters) != len(expected_letters):
         raise ValueError('bug appeared in "get_diacritization_error"')
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
+        error_object = ErrorDetails()
+        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter)
         letter_location += 1
-        if actual_letter.letter != expected_letter:
-            actual_letters_errors.append(actual_letter.letter)
-            expected_letters_errors.append(expected_letter)
-            error_locations.append(letter_location)
-            number_of_diacritization_errors += 1
+        total_chars_including_un_diacritized_target_letter += 1
+        if len(decomposed_expected_letter) > 1:
+            total_chars_not_including_un_diacritized_target_letter += 1
+            if actual_letter.letter != expected_letter:
+
+                error_object.actual_letter = actual_letter.letter
+                error_object.expected_letter = expected_letter
+                error_object.error_location = letter_location
+                error_object.word = get_word_that_has_error(letter_location, sentence)
+
+                list_of_object_error.append(deepcopy(error_object))
+                number_of_diacritization_errors += 1
 
     total_error += number_of_diacritization_errors
 
     print 'total error in this sentence', number_of_diacritization_errors
     print 'total error in all sentences: ', total_error
 
-    return actual_letters_errors, expected_letters_errors, error_locations
+    return list_of_object_error
 
 
-def get_diacritization_error_without_counting_last_letter(actual_letters, expected_letters):
-
-    actual_letters_errors = []
-    expected_letters_errors = []
-    global total_error_without_last_letter
-
+def get_diacritization_error_without_counting_last_letter(actual_letters, expected_letters, sentence):
+    list_of_object_error = []
     number_of_diacritization_errors = 0
     letter_location = 0
-    error_locations = []
+
+    global total_error_without_last_letter
 
     if len(actual_letters) != len(expected_letters):
         raise ValueError('bug appeared in "get_diacritization_error_without_counting_last_letter"')
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
+        error_object = ErrorDetails()
         if actual_letter.location != 'last' and expected_letter.location != 'last':
+            decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
                 letter_location += 1
-                if actual_letter.letter != expected_letter.letter:
-                    actual_letters_errors.append(actual_letter.letter)
-                    expected_letters_errors.append(expected_letter.letter)
-                    error_locations.append(letter_location)
-                    number_of_diacritization_errors += 1
+                # ignoring undiacritized target character from DER Calculation as per the paper
+                if len(decomposed_expected_letter) > 1:
+                    if actual_letter.letter != expected_letter.letter:
+                        error_object.actual_letter = actual_letter.letter
+                        error_object.expected_letter = expected_letter.letter
+                        error_object.error_location = letter_location
+                        error_object.word = get_word_that_has_error(letter_location, sentence)
+
+                        list_of_object_error.append(deepcopy(error_object))
+                        number_of_diacritization_errors += 1
             else:
                 raise ValueError('bug appeared in "get_diacritization_error_without_counting_last_letter"')
 
     total_error_without_last_letter += number_of_diacritization_errors
 
-    print 'total error in this sentence', number_of_diacritization_errors
-    print 'total error in all sentences: ', total_error_without_last_letter
+    print 'total error in this sentence (without Last Letter):', number_of_diacritization_errors
+    print 'total error in all sentences (without Last Letter):', total_error_without_last_letter
 
-    return actual_letters_errors, expected_letters_errors, error_locations
+    return list_of_object_error
 
 
-def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, error_locations, current_sentence,
+def decompose_letter_into_chars_and_diacritics(expected_letter):
+    decomposed_letter = []
+    try:
+        for each_letter in expected_letter:
+            decomposed_letter.append(each_letter)
+    except:
+        x = 1
+    return decomposed_letter
+
+
+def get_word_that_has_error(error_location, sentence):
+    counter = 0
+    for each_word in sentence:
+        each_word = unicodedata.normalize('NFD', each_word)
+        for each_char in each_word:
+            if not unicodedata.combining(each_char):
+                counter += 1
+                if error_location == counter:
+                    return each_word
+
+
+def write_data_into_excel_file(errors, current_sentence,
                                diacritization_error_excel_file_path, current_row_in_excel_file):
     wb = open_workbook(diacritization_error_excel_file_path)
     w = copy(wb)
@@ -295,19 +340,17 @@ def write_data_into_excel_file(actual_letters_errors, expected_letters_errors, e
     current_row_in_excel_file += 1
     column = 0
 
-    if len(actual_letters_errors) != len(expected_letters_errors) != len(error_locations):
-        raise ValueError("Bug Found in 'write_data_into_excel_file'")
-
-    for actual_letter, expected_letter, location in \
-            zip(actual_letters_errors, expected_letters_errors, error_locations):
-
-        worksheet.write(current_row_in_excel_file, column, actual_letter)
+    for each_object in errors:
+        worksheet.write(current_row_in_excel_file, column, each_object.actual_letter)
 
         column = 1
-        worksheet.write(current_row_in_excel_file, column, expected_letter)
+        worksheet.write(current_row_in_excel_file, column, each_object.expected_letter)
 
         column = 2
-        worksheet.write(current_row_in_excel_file, column, location)
+        worksheet.write(current_row_in_excel_file, column, each_object.error_location)
+
+        column = 3
+        worksheet.write(current_row_in_excel_file, column, each_object.word)
 
         current_row_in_excel_file += 1
         column = 0
@@ -368,30 +411,28 @@ if __name__ == "__main__":
         # end of get character position
 
         # DER Calculation
-        list_of_actual_letters_errors, list_of_expected_letters_errors, list_of_error_locations = \
-            get_diacritization_error(location_of_each_char_for_actual_op,
-                                     expected_letters_after_sukun_correction)
+        list_of_error = get_diacritization_error(location_of_each_char_for_actual_op,
+                                                 expected_letters_after_sukun_correction,
+                                                 selected_sentence)
 
-        list_of_actual_letters_errors_for_DER_without_last_letter,\
-        list_of_expected_letters_errors_for_DER_without_last_letter,\
-        list_of_error_locations_for_DER_without_last_letter = \
-            get_diacritization_error_without_counting_last_letter(
-                location_of_each_char_for_actual_op,
-                location_of_each_char_for_expected_op)
+        list_of_error_without_counting_last_letter = get_diacritization_error_without_counting_last_letter(
+                                                    location_of_each_char_for_actual_op,
+                                                    location_of_each_char_for_expected_op,
+                                                    selected_sentence)
         # End DER Calculation
         excel1 = current_row_excel_1
-        current_row_excel_1 = write_data_into_excel_file(list_of_actual_letters_errors, list_of_expected_letters_errors,
-                                                         list_of_error_locations,
+        current_row_excel_1 = write_data_into_excel_file(list_of_error,
                                                          selected_sentence, diacritization_error_excel_file_path,
                                                          excel1)
 
         excel2 = current_row_excel_2
-        current_row_excel_2 = write_data_into_excel_file(list_of_actual_letters_errors_for_DER_without_last_letter,
-                                                         list_of_expected_letters_errors_for_DER_without_last_letter,
-                                                         list_of_error_locations_for_DER_without_last_letter,
+        current_row_excel_2 = write_data_into_excel_file(list_of_error_without_counting_last_letter,
                                                          selected_sentence,
                                                          diacritization_error_without_last_letter_excel_file_path,
                                                          excel2)
 
         current_sentence_counter += 1
         print 'sentence number: ', current_sentence_counter
+
+    print "Total Chars Not Including Undiacritized Target Letter: ", total_chars_not_including_un_diacritized_target_letter
+    print "Total Chars Including Undiacritized Target Letter: ", total_chars_including_un_diacritized_target_letter
