@@ -301,11 +301,11 @@ def get_diacritization_error(actual_letters, expected_letters, sentence):
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         error_object = ErrorDetails()
-        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter)
+        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
         letter_location += 1
         total_chars_including_un_diacritized_target_letter += 1
         if len(decomposed_expected_letter) > 1:
-            if actual_letter.letter != expected_letter:
+            if actual_letter.letter != expected_letter.letter:
                 error_object.actual_letter = actual_letter
                 error_object.expected_letter = expected_letter
                 error_object.error_location = letter_location
@@ -334,10 +334,11 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         error_object = ErrorDetails()
+        letter_location += 1
         if actual_letter.location != 'last' and expected_letter.location != 'last':
             decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
-                letter_location += 1
+
                 if len(decomposed_expected_letter) > 1:
                     if actual_letter.letter != expected_letter.letter:
                         error_object.actual_letter = actual_letter
@@ -390,10 +391,11 @@ def write_data_into_excel_file(errors, current_sentence,
     column = 0
 
     for each_object in errors:
-        worksheet.write(current_row_in_excel_file, column, each_object.actual_letter)
+        worksheet.write(current_row_in_excel_file, column, each_object.actual_letter.letter)
 
         column = 1
-        worksheet.write(current_row_in_excel_file, column, each_object.expected_letter)
+
+        worksheet.write(current_row_in_excel_file, column, each_object.expected_letter.letter)
 
         column = 2
         worksheet.write(current_row_in_excel_file, column, each_object.error_location)
@@ -464,8 +466,9 @@ if __name__ == "__main__":
                                                                chars_count_for_each_word_in_current_sentence)
         # end of get character position
 
+        # calculate DER
         list_of_error = get_diacritization_error(actual_letters_after_sukun_and_fatha_correction,
-                                     expected_letters_after_sukun_correction,
+                                                 location_of_each_char_for_expected_op,
                                                  selected_sentence)
 
         list_of_error_without_counting_last_letter = \
@@ -474,6 +477,9 @@ if __name__ == "__main__":
                 location_of_each_char_for_expected_op,
                 selected_sentence)
 
+        # end of calculate DER
+
+        # write to excel
         excel1 = current_row_excel_1
         current_row_excel_1 = write_data_into_excel_file(list_of_error, selected_sentence,
                                                          diacritization_error_excel_file_path, excel1)

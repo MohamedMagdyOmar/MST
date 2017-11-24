@@ -416,8 +416,25 @@ def do_we_need_to_search_in_dictionary(dictionary, word):
         decomposed_dict, decomposed_act = decompose_word_into_letters(each_word, word)
         norm_dict, norm_act = normalize_words_under_comparison(decomposed_dict, decomposed_act)
 
+        if len(norm_dict) != len(norm_act):
+            raise ValueError("Bug Found In 'do_we_need_to_search_in_dictionary'")
+
         if sorted(norm_dict) == sorted(norm_act):
             return False
+
+    for each_word in dictionary:
+        decomposed_dict, decomposed_act = decompose_word_into_letters(each_word, word)
+        norm_dict, norm_act = normalize_words_under_comparison(decomposed_dict, decomposed_act)
+        for x in range(0, len(norm_act)):
+            # compare letters before last letter
+            if x < (len(norm_act) - 1):
+                if norm_dict[x] != norm_act[x]:
+                    # so diff is in first or middle letters
+                    break
+            else:
+                # so diff is in last letter so ignore it
+                return False
+
     return True
 
 
@@ -502,17 +519,16 @@ def get_diacritization_error(actual_letters, expected_letters, sentence):
     number_of_diacritization_errors = 0
     letter_location = 0
 
-
     if len(actual_letters) != len(expected_letters):
         raise ValueError('bug appeared in "get_diacritization_error"')
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         error_object = ErrorDetails()
-        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter)
+        decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
         letter_location += 1
         total_chars_including_un_diacritized_target_letter += 1
         if len(decomposed_expected_letter) > 1:
-            if actual_letter != expected_letter:
+            if actual_letter.letter != expected_letter.letter:
                 error_object.actual_letter = actual_letter
                 error_object.expected_letter = expected_letter
                 error_object.error_location = letter_location
@@ -541,14 +557,15 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         error_object = ErrorDetails()
+        letter_location += 1
         if actual_letter.location != 'last' and expected_letter.location != 'last':
             decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
-                letter_location += 1
+
                 if len(decomposed_expected_letter) > 1:
                     if actual_letter.letter != expected_letter.letter:
-                        error_object.actual_letter = actual_letter.letter
-                        error_object.expected_letter = expected_letter.letter
+                        error_object.actual_letter = actual_letter
+                        error_object.expected_letter = expected_letter
                         error_object.error_location = letter_location
                         error_object.word = get_word_that_has_error(letter_location, sentence)
 
@@ -596,10 +613,10 @@ def write_data_into_excel_file(errors, current_sentence, diacritization_error_ex
     column = 0
 
     for each_object in errors:
-        worksheet.write(current_row_in_excel_file, column, each_object.actual_letter)
+        worksheet.write(current_row_in_excel_file, column, each_object.actual_letter.letter)
 
         column = 1
-        worksheet.write(current_row_in_excel_file, column, each_object.expected_letter)
+        worksheet.write(current_row_in_excel_file, column, each_object.expected_letter.letter)
 
         column = 2
         worksheet.write(current_row_in_excel_file, column, each_object.error_location)
@@ -677,8 +694,8 @@ if __name__ == "__main__":
         # end of get character position
 
         # DER Calculation
-        list_of_error = get_diacritization_error(list_of_chars_in_sent_after_sukun_fatha_and_dict_correction,
-                                     expected_letters_after_sukun_correction, selected_sentence)
+        list_of_error = get_diacritization_error(location_of_each_char_for_actual_op,
+                                                 location_of_each_char_for_expected_op, selected_sentence)
 
         list_of_error_without_counting_last_letter = get_diacritization_error_without_counting_last_letter(
                 location_of_each_char_for_actual_op,
