@@ -285,10 +285,11 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
 
     for actual_letter, expected_letter in zip(actual_letters, expected_letters):
         error_object = ErrorDetails()
+        letter_location += 1
         if actual_letter.location != 'last' and expected_letter.location != 'last':
             decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
-                letter_location += 1
+
                 # ignoring undiacritized target character from DER Calculation as per the paper
                 if len(decomposed_expected_letter) > 1:
                     if actual_letter.letter != expected_letter.letter:
