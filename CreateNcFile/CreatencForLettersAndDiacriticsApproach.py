@@ -291,6 +291,6 @@ if __name__ == "__main__":
 
     create_netcdf_target_classes()
     create_seq_tags()
-    #create_netcdf_file(availableDataSetTypes[0])
+    create_netcdf_file(availableDataSetTypes[0])
     endTime = datetime.datetime.now()
     print "over all time ", endTime - startTime
