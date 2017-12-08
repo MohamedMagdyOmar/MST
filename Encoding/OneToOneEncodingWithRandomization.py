@@ -7,26 +7,32 @@ import os
 import random
 
 # 1
-diacritizedCharacter = []
-DiacriticsOnly = []
-unDiacritizedCharacter = []
-listOfDBWords = []
-listOfDbSentenceNumber = []
-randomized_Sentence = []
-listOfPunctuationBySymbol = [u' .', u'.', u' :', u'«', u'»', u'،', u'؛', u'؟', u'.(', u').', u':(', u'):', u'» .', u'».']
-final_ListOfUndiacritized_Word = []
+
+listOfPunctuationSymbols = [u' .', u'.', u' :', u'«', u'»', u'،', u'؛', u'؟', u'.(', u').', u':(', u'):', u'» .', u'».']
 listOfArabicDiacriticsUnicode = [["064b", "064c", "064d", "064e", "064f", "0650", "0651", "0652", "0670"],
                                  [1, 2, 3, 4, 5, 6, 8, 7, 9]]
+sentenceCount = 0
 
 
-def declareGlobalVariables():
-    global wordCount
-    wordCount = 0
-    global sentenceCount
-    sentenceCount = 1
+class DbObject:
+    diacritizedCharacter = "",
+    diacritizedWord = ""
 
-    global list_of_all_sentence
-    list_of_all_sentence = []
+    undiacritizedCharacter = "",
+    undiacritizedWord = ""
+
+    diacritics = "",
+    sentenceNumber = 0
+
+    def __init__(self):
+        self.diacritizedCharacter = ""
+        self.diacritizedWord = ""
+
+        self.undiacritizedCharacter = ""
+        self.undiacritizedWord = ""
+
+        self.diacritics = ""
+        self.sentenceNumber = ""
 
 
 def get_all_files():
@@ -44,11 +50,11 @@ def get_all_files():
 def read_doc(each_doc, list_of_paths, list_of_docs):
 
     f = open(list_of_paths[each_doc], 'r')
-    docName = list_of_docs[each_doc]
+    document_name = list_of_docs[each_doc]
     data = f.readlines()
     f.close()
 
-    return doc_name, data
+    return document_name, data
 
 
 def extract_and_clean_words_from_doc(data):
@@ -91,19 +97,23 @@ def bind_words_with_sentence_number_in_this_doc(doc_name, list_of_words, raw_dat
 
     if doc_name != 'quran-simple.txt' and not (doc_name.startswith('ANN2002')):
         for word in list_of_words:
-            if not (word in listOfPunctuationBySymbol):
+            if not (word in listOfPunctuationSymbols):
                 if word.find(u'.') != -1:
                     wordCount += 1
                     word = re.sub(u'[.]', '', word)
                     if word != u'':
                         list_of_words_in_doc_and_corresponding_sentence_number.append([word, sentenceCount])
+
+                    list_of_words_in_doc_and_corresponding_sentence_number.append(["eos", sentenceCount])
                     sentenceCount += 1
                 else:
                     wordCount += 1
                     list_of_words_in_doc_and_corresponding_sentence_number.append([word, sentenceCount])
+                    list_of_words_in_doc_and_corresponding_sentence_number.append(["space", sentenceCount])
             else:
                 sentenceCount += 1
                 list_of_words_in_doc_and_corresponding_sentence_number.append(["bos", sentenceCount])
+
     else:
         sentenceCount = 0
         wordCount = 0
@@ -116,214 +126,172 @@ def bind_words_with_sentence_number_in_this_doc(doc_name, list_of_words, raw_dat
                 list_of_words_in_doc_and_corresponding_sentence_number.append([eachWord, sentenceCount])
                 list_of_words_in_doc_and_corresponding_sentence_number.append(["space", sentenceCount])
 
-        list_of_words_in_doc_and_corresponding_sentence_number.pop()
-        list_of_words_in_doc_and_corresponding_sentence_number.append(["eos", sentenceCount])
+            list_of_words_in_doc_and_corresponding_sentence_number.pop()
+            list_of_words_in_doc_and_corresponding_sentence_number.append(["eos", sentenceCount])
+
     return list_of_words_in_doc_and_corresponding_sentence_number
 
 
-def encodingDiacritizedCharacter():
-    global listOfTargetSequenceEncodedWords
-    global listOfInputSequenceEncodedWordsInHexFormat
-    global listOfTargetSequenceEncodedWordsInHexFormat
-    global listOfInputSequenceEncodedWords
-    global listOfUnDiacritizedWord
-    listOfInputSequenceEncodedWords = []
+def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words_without_numbers):
+
     listOfUnDiacritizedWord = []
-    listOfTargetSequenceEncodedWords = []
-    listOfInputSequenceEncodedWordsInHexFormat = []
-    listOfTargetSequenceEncodedWordsInHexFormat = []
+    for word in list_of_extracted_words_without_numbers:
+        word[0] = word[0].decode('utf-8', 'ignore')
+        if word[0] != "space" and word[0] != "bos" and word[0] != "eos":
+            if not word[0] in listOfPunctuationSymbols:
 
-    for word in listOfWords:
-        if not word in listOfPunctuationBySymbol:
-            if word.find(u'.') != -1:
-                word = re.sub(u'[.]', '', word)
-#            word = word.decode('utf-8', 'ignore') may be need to return itback
+                if word[0].find('.') != -1:
+                    word[0] = re.sub('[.]', '', word[0])
 
-            nfkd_form = unicodedata.normalize('NFKD', word)
+                #word[0] = word[0].decode('utf-8', 'ignore')
+                nfkd_form = unicodedata.normalize('NFKD', word[0])
 
-            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
-            listOfUnDiacritizedWord.append(unDiacritizedWord)
+                word[0] = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
+                listOfUnDiacritizedWord.append(word)
+        else:
+            listOfUnDiacritizedWord.append(word)
 
-            letterFoundFlag = False
-            prevCharWasDiac = False
-
-            for c in word:
-
-                if not unicodedata.combining(c):  # letter
-                    letterFoundFlag = True
-
-                    hexAsString = hex(ord(c))[2:].zfill(4)
-
-                    binaryAsString = bin(int(hexAsString, 16))[2:].zfill(16)
-                    integer = int(hexAsString, 16)
-                    maskedInt = integer & 255
-                    maskedBinaryAsString = bin(integer & 255)[2:].zfill(16)
-                    shiftedInt = maskedInt << 4
-                    shiftedIntInBin = bin(shiftedInt)
-
-                    listOfTargetSequenceEncodedWordsInHexFormat.append(hex(shiftedInt))
-                    listOfTargetSequenceEncodedWords.append(bin(shiftedInt)[2:].zfill(16))
-                    listOfInputSequenceEncodedWordsInHexFormat.append(hex(shiftedInt))
-                    listOfInputSequenceEncodedWords.append(str(bin(shiftedInt)[2:].zfill(16)))
-
-                elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':  # first diacritization
-                    prevCharWasDiac = True
-                    letterFoundFlag = False
-
-                    hexDiacAsString = hex(ord(c))[2:].zfill(4)
-                    if hexDiacAsString == '0670' :
-                        x = 1
-                    binaryAsString = bin(int(hexDiacAsString, 16))[2:].zfill(16)
-                    integerDiac = listOfArabicDiacriticsUnicode[1][
-                        listOfArabicDiacriticsUnicode[0].index(hexDiacAsString)]
-                    integerDiacAfterORing = shiftedInt | integerDiac
-                    listOfTargetSequenceEncodedWords.pop()
-                    listOfTargetSequenceEncodedWords.append(bin(integerDiacAfterORing)[2:].zfill(16))
-
-                    listOfTargetSequenceEncodedWordsInHexFormat.pop()
-                    listOfTargetSequenceEncodedWordsInHexFormat.append(hex(integerDiacAfterORing))
-                elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
-
-                    letterFoundFlag = False
-                    prevCharWasDiac = False
-
-                    hexSecDiacAsString = hex(ord(c))[2:].zfill(4)
-
-                    integerSecDiac = listOfArabicDiacriticsUnicode[1][
-                        listOfArabicDiacriticsUnicode[0].index(hexSecDiacAsString)]
-                    integerSecDiacAfterORing = integerDiacAfterORing | integerSecDiac
-                    listOfTargetSequenceEncodedWords.pop()
-                    listOfTargetSequenceEncodedWords.append(bin(integerSecDiacAfterORing)[2:].zfill(16))
-                    listOfTargetSequenceEncodedWordsInHexFormat.pop()
-                    listOfTargetSequenceEncodedWordsInHexFormat.append(hex(integerSecDiacAfterORing))
+    return listOfUnDiacritizedWord
 
 
-def encodingunDiacritizedCharacter():
-    global listOfUnDiacritizedWord
-    global listOfInputSequenceEncodedWords
-    listOfUnDiacritizedWord = []
-    listOfInputSequenceEncodedWords = []
+def character_encoder(list_of_extracted_words_without_numbers):
+    listOfEncodedCharacters = []
+    listOfEncodedCharactersInHexFormat = []
 
-    for word in listOfWords:
-        if not word in listOfPunctuationBySymbol:
+    for word[0] in list_of_extracted_words_without_numbers:
+        if word != "space" and word != "eos" and word != "bos":
+            if not word in listOfPunctuationSymbols:
+                if word.find(u'.') != -1:
+                    word = re.sub(u'[.]', '', word)
 
-            if word.find('.') != -1:
-                word = re.sub('[.]', '', word)
+                letterFoundFlag = False
+                prevCharWasDiac = False
 
-            word = word.decode('utf-8', 'ignore')
-            nfkd_form = unicodedata.normalize('NFKD', word)
+                for c in word:
+                    if not unicodedata.combining(c):  # letter
+                        letterFoundFlag = True
+                        hexAsString = hex(ord(c))[2:].zfill(4)
+                        integer = int(hexAsString, 16)
+                        maskedInt = integer & 255
+                        shiftedInt = maskedInt << 4
+                        listOfEncodedCharactersInHexFormat.append(hex(shiftedInt))
+                        listOfEncodedCharacters.append(bin(shiftedInt)[2:].zfill(16))
 
-            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
-            listOfUnDiacritizedWord.append(unDiacritizedWord)
+                    elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':  # first diacritization
+                        prevCharWasDiac = True
+                        letterFoundFlag = False
 
-            for c in word:
+                        hexDiacAsString = hex(ord(c))[2:].zfill(4)
 
-                if not unicodedata.combining(c):  # letter
-                    letterFoundFlag = True
+                        integerDiac = listOfArabicDiacriticsUnicode[1][
+                            listOfArabicDiacriticsUnicode[0].index(hexDiacAsString)]
+                        integerDiacAfterORing = shiftedInt | integerDiac
+                        listOfEncodedCharacters.pop()
+                        listOfEncodedCharacters.append(bin(integerDiacAfterORing)[2:].zfill(16))
 
-                    hexAsString = hex(ord(c))[2:].zfill(4)
+                        listOfEncodedCharactersInHexFormat.pop()
+                        listOfEncodedCharactersInHexFormat.append(hex(integerDiacAfterORing))
 
-                    binaryAsString = bin(int(hexAsString, 16))[2:].zfill(16)
-                    integer = int(hexAsString, 16)
-                    maskedInt = integer & 255
-                    maskedBinaryAsString = bin(integer & 255)[2:].zfill(16)
-                    shiftedInt = maskedInt << 4
-                    shiftedIntInBin = bin(shiftedInt)
-                    listOfInputSequenceEncodedWords.append(bin(shiftedInt)[2:].zfill(16))
+                    elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
+
+                        letterFoundFlag = False
+                        prevCharWasDiac = False
+
+                        hexSecDiacAsString = hex(ord(c))[2:].zfill(4)
+
+                        integerSecDiac = listOfArabicDiacriticsUnicode[1][
+                            listOfArabicDiacriticsUnicode[0].index(hexSecDiacAsString)]
+                        integerSecDiacAfterORing = integerDiacAfterORing | integerSecDiac
+                        listOfEncodedCharacters.pop()
+                        listOfEncodedCharacters.append(bin(integerSecDiacAfterORing)[2:].zfill(16))
+                        listOfEncodedCharactersInHexFormat.pop()
+                        listOfEncodedCharactersInHexFormat.append(hex(integerSecDiacAfterORing))
+        else:
+            listOfEncodedCharacters.append(word)
+            listOfEncodedCharactersInHexFormat.append(word)
+
+    return listOfEncodedCharacters, listOfEncodedCharactersInHexFormat
 
 
-def convertToString():
-    for item in range(0, len(listOfInputSequenceEncodedWords)):
-        listOfInputSequenceEncodedWords[item] = str(listOfInputSequenceEncodedWords[item])
+def extract_each_character_from_word_with_its_diacritization(list_of_extracted_words_and_corresponding_sentence_number, un_diacritized_words):
 
-
-first = ""
-second = ""
-third = ""
-overall = ""
-#  = unicodedata.normalize('NFC', word)
-
-def extractEachCharacterFromWordWithItsDiacritization():
+    DbList = []
     letterFoundFlag = False
     prevCharWasDiac = False
     loopCount = 0
-    first = ""
-    second = ""
-    third = ""
     overall = ""
     diacritics_only_overall = ""
 
-    for word in listOfWords:
+    for eachObject, un_diacritized_word in zip(list_of_extracted_words_and_corresponding_sentence_number, un_diacritized_words):
+        diacritizedWord = eachObject[0]
+        sentenceNumber = eachObject[1]
 
-        if not word in listOfPunctuationBySymbol:
+        loopCount += 1
+        if eachObject[0] != 'space' and eachObject[0] != 'bos' and eachObject[0] != 'eos':
 
-            if word.find(u'.') != -1:
-                word = re.sub(u'[.]', '', word)
+            spaChar = unicodedata.normalize('NFC', eachObject[0])
 
-#            word = word.decode('utf-8', 'ignore') may be return back
-
-            # removing diacritization from characters
-            nfkd_form = unicodedata.normalize('NFKD', word)
-            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c)])
-            try:
-                sentenceNumber = listOfWordsInSent[loopCount][1]
-            except:
-                x = 1
-            loopCount += 1
-
-            spaChar = unicodedata.normalize('NFC', word)
             for c in spaChar:
 
                 if not unicodedata.combining(c):
-                    first = c
                     letterFoundFlag = True
                     overall = c
                     comp = unicodedata.normalize('NFC', c)
-                    diacritizedCharacter.append(comp)
+                    newObject = DbObject()
 
-                    listOfDbSentenceNumber.append(sentenceNumber)
+                    newObject.diacritizedCharacter = comp
+                    newObject.diacritizedWord = diacritizedWord
 
-                    listOfDBWords.append(word)
+                    newObject.undiacritizedCharacter = c
+                    newObject.undiacritizedWord = un_diacritized_word
 
-                    listOfUnDiacritizedWord.append(unDiacritizedWord)
-                    unDiacritizedCharacter.append(c)
-                    DiacriticsOnly.append("")
-                    unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
-                    final_ListOfUndiacritized_Word.append(unDiacritizedWord)
+                    newObject.diacritics = ""
+                    newObject.sentenceNumber = sentenceNumber
+
+                    DbList.append(newObject)
 
                 elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':
-                    second = c
+
                     prevCharWasDiac = True
                     letterFoundFlag = False
                     overall += c
                     diacritics_only_overall = c
 
-                    comp = unicodedata.normalize('NFC', overall)
-                    comp_diacritics_Only = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
+                    newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.sentenceNumber = sentenceNumber
 
-                    diacritizedCharacter.pop()
-                    diacritizedCharacter.append(comp)
+                    DbList.pop()
+                    DbList.append(newObject)
 
-                    DiacriticsOnly.pop()
-                    DiacriticsOnly.append(comp_diacritics_Only)
                 elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
-                    third = c
+
                     letterFoundFlag = False
                     prevCharWasDiac = False
                     overall += c
                     diacritics_only_overall += c
 
-                    comp = unicodedata.normalize('NFC', overall)
-                    comp_diacritics_Only = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
+                    newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.sentenceNumber = sentenceNumber
 
-                    diacritizedCharacter.pop()
-                    diacritizedCharacter.append(comp)
+                    DbList.pop()
+                    DbList.append(newObject)
+        else:
+            newObject = DbObject()
 
-                    DiacriticsOnly.pop()
-                    DiacriticsOnly.append(comp_diacritics_Only)
-                    # for word in listOfUnDiacritizedWord:
-                    # for char in word:
-                    #  unDiacritizedCharacter.append(char)
+            newObject.diacritizedCharacter = eachObject[0]
+            newObject.diacritizedWord = eachObject[0]
+
+            newObject.undiacritizedCharacter = eachObject[0]
+            newObject.undiacritizedWord = eachObject[0]
+
+            newObject.diacritics = ""
+            newObject.sentenceNumber = eachObject[1]
+            DbList.append(newObject)
+
+
+    return DbList
 
 
 def connectToDB():
@@ -342,8 +310,7 @@ def connectToDB():
 
 def prepare_list_for_randomization():
     list_of_sentence_content = []
-    intermediate_list = []
-    #list_of_all_sentence = []
+
     sentence_number = listOfDbSentenceNumber[0]
     counter = 0
 
@@ -470,17 +437,18 @@ def resetAllLists():
 
 if __name__ == "__main__":
     listOfFilesPaths, ListOfDocs = get_all_files()
-    declareGlobalVariables()
+
     for eachDoc in range(0, len(listOfFilesPaths)):
         doc_name = listOfFilesPaths[eachDoc]
         selected_doc, raw_data = read_doc(eachDoc, listOfFilesPaths, ListOfDocs)
         cleaned_data = extract_and_clean_words_from_doc(raw_data)
-        bind_words_with_sentence_number_in_this_doc(doc_name, cleaned_data, raw_data)
+        listOfWordsAndCorrespondingSentenceNumber = bind_words_with_sentence_number_in_this_doc(selected_doc, cleaned_data, raw_data)
+        listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(listOfWordsAndCorrespondingSentenceNumber)
 
-        encodingDiacritizedCharacter()
-        # encodingunDiacritizedCharacter()
-        #  convertToString()
-        extractEachCharacterFromWordWithItsDiacritization()
+        encodedInput, encodedInputInHexFormat = character_encoder(listOfUndiacritizedWords)
+        encodedTarget, encodedTargetInHexFormat = character_encoder(cleaned_data)
+        dbList = extract_each_character_from_word_with_its_diacritization(
+            listOfWordsAndCorrespondingSentenceNumber, listOfUndiacritizedWords)
         connectToDB()
         prepare_list_for_randomization()
         randomize_Data()
