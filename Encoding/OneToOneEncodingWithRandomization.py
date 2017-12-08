@@ -5,6 +5,7 @@ import MySQLdb
 import math
 import os
 import random
+import copy
 
 # 1
 
@@ -122,6 +123,7 @@ def bind_words_with_sentence_number_in_this_doc(doc_name, list_of_words, raw_dat
             each_word_in_versus = eachVersus.split()
             list_of_words_in_doc_and_corresponding_sentence_number.append(["bos", sentenceCount])
             for eachWord in each_word_in_versus:
+                eachWord = eachWord.decode('utf-8', 'ignore')
                 wordCount += 1
                 list_of_words_in_doc_and_corresponding_sentence_number.append([eachWord, sentenceCount])
                 list_of_words_in_doc_and_corresponding_sentence_number.append(["space", sentenceCount])
@@ -135,13 +137,14 @@ def bind_words_with_sentence_number_in_this_doc(doc_name, list_of_words, raw_dat
 def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words_without_numbers):
 
     listOfUnDiacritizedWord = []
+
     for word in list_of_extracted_words_without_numbers:
-        word[0] = word[0].decode('utf-8', 'ignore')
+
         if word[0] != "space" and word[0] != "bos" and word[0] != "eos":
             if not word[0] in listOfPunctuationSymbols:
 
-                if word[0].find('.') != -1:
-                    word[0] = re.sub('[.]', '', word[0])
+                if word[0].find(u'.') != -1:
+                    word[0] = re.sub(u'[.]', '', word[0])
 
                 #word[0] = word[0].decode('utf-8', 'ignore')
                 nfkd_form = unicodedata.normalize('NFKD', word[0])
@@ -158,16 +161,17 @@ def character_encoder(list_of_extracted_words_without_numbers):
     listOfEncodedCharacters = []
     listOfEncodedCharactersInHexFormat = []
 
-    for word[0] in list_of_extracted_words_without_numbers:
-        if word != "space" and word != "eos" and word != "bos":
-            if not word in listOfPunctuationSymbols:
-                if word.find(u'.') != -1:
-                    word = re.sub(u'[.]', '', word)
+    for word in list_of_extracted_words_without_numbers:
+
+        if word[0] != "space" and word[0] != "eos" and word[0] != "bos":
+            if not word[0] in listOfPunctuationSymbols:
+                if word[0].find(u'.') != -1:
+                    word[0] = re.sub(u'[.]', '', word[0])
 
                 letterFoundFlag = False
                 prevCharWasDiac = False
 
-                for c in word:
+                for c in word[0]:
                     if not unicodedata.combining(c):  # letter
                         letterFoundFlag = True
                         hexAsString = hex(ord(c))[2:].zfill(4)
@@ -207,8 +211,8 @@ def character_encoder(list_of_extracted_words_without_numbers):
                         listOfEncodedCharactersInHexFormat.pop()
                         listOfEncodedCharactersInHexFormat.append(hex(integerSecDiacAfterORing))
         else:
-            listOfEncodedCharacters.append(word)
-            listOfEncodedCharactersInHexFormat.append(word)
+            listOfEncodedCharacters.append(word[0])
+            listOfEncodedCharactersInHexFormat.append(word[0])
 
     return listOfEncodedCharacters, listOfEncodedCharactersInHexFormat
 
@@ -243,7 +247,7 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
                     newObject.diacritizedWord = diacritizedWord
 
                     newObject.undiacritizedCharacter = c
-                    newObject.undiacritizedWord = un_diacritized_word
+                    newObject.undiacritizedWord = un_diacritized_word[0]
 
                     newObject.diacritics = ""
                     newObject.sentenceNumber = sentenceNumber
@@ -308,86 +312,66 @@ def connectToDB():
     cur = db.cursor()
 
 
-def prepare_list_for_randomization():
-    list_of_sentence_content = []
+def prepare_list_for_randomization(db_data):
+    list_of_sentence_objects = []
+    intermediate_list = []
+    current_sentence_number = 1
+    for each_object in db_data:
 
-    sentence_number = listOfDbSentenceNumber[0]
-    counter = 0
-
-    for current_sentence_number in listOfDbSentenceNumber:
-        if current_sentence_number == 6235:
-            x = 1
-        if current_sentence_number == sentence_number:
-            intermediate_list = []
-            intermediate_list.append(docName)
-            intermediate_list.append(unDiacritizedCharacter[counter])
-            intermediate_list.append(diacritizedCharacter[counter])
-            intermediate_list.append(listOfDbSentenceNumber[counter])
-            intermediate_list.append(listOfDBWords[counter])
-            intermediate_list.append(listOfInputSequenceEncodedWords[counter])
-            intermediate_list.append(listOfTargetSequenceEncodedWords[counter])
-            intermediate_list.append(listOfInputSequenceEncodedWordsInHexFormat[counter])
-            intermediate_list.append(listOfTargetSequenceEncodedWordsInHexFormat[counter])
-            intermediate_list.append(DiacriticsOnly[counter])
-            intermediate_list.append(final_ListOfUndiacritized_Word[counter])
-
-            list_of_sentence_content.append(intermediate_list)
-
-            counter += 1
+        if each_object.sentenceNumber == current_sentence_number:
+            intermediate_list.append(each_object)
         else:
-            list_of_all_sentence.append(list_of_sentence_content)
-
+            list_of_sentence_objects.append(intermediate_list)
             intermediate_list = []
-            list_of_sentence_content = []
+            intermediate_list.append(each_object)
+            current_sentence_number += 1
 
-            sentence_number += 1
-
-            intermediate_list.append(docName)
-            intermediate_list.append(unDiacritizedCharacter[counter])
-            intermediate_list.append(diacritizedCharacter[counter])
-            intermediate_list.append(listOfDbSentenceNumber[counter])
-            intermediate_list.append(listOfDBWords[counter])
-            intermediate_list.append(listOfInputSequenceEncodedWords[counter])
-            intermediate_list.append(listOfTargetSequenceEncodedWords[counter])
-            intermediate_list.append(listOfInputSequenceEncodedWordsInHexFormat[counter])
-            intermediate_list.append(listOfTargetSequenceEncodedWordsInHexFormat[counter])
-            intermediate_list.append(DiacriticsOnly[counter])
-            intermediate_list.append(final_ListOfUndiacritized_Word[counter])
-
-            list_of_sentence_content.append(intermediate_list)
-
-            counter += 1
-
-    list_of_all_sentence.append(list_of_sentence_content)
-    x = 1
+    return list_of_sentence_objects
 
 
-def randomize_Data():
-    global randomized_Sentence
-    randomized_Sentence = random.sample(list_of_all_sentence, len(list_of_all_sentence))
+def randomize_Data(data):
+
+    list_after_randomization = []
+    randomized_sentence = random.sample(data, len(data))
+    for each_sentence_object in randomized_sentence:
+        for each_letter_object in each_sentence_object:
+            list_after_randomization.append(each_letter_object)
+
+    return list_after_randomization
 
 
-def pushDataIntoDB():
-    global randomized_Sentence
-    requiredPercentageForValidation = math.ceil((len(randomized_Sentence) * 12) / 100)
-    trainingCounter = len(randomized_Sentence) - (requiredPercentageForValidation)
-    isTrainingDataIsFinished = False
-    isValidationDataIsFinished = False
+def pushDataIntoDB(data, encoded_input, encoded_input_in_hex_format, encoded_target, encoded_target_in_hex_format):
+
+    required_percentage_for_validation = math.ceil((len(data) * 12) / 100)
+    training_counter = len(data) - required_percentage_for_validation
+
     # Part A : filling "Encoded Words" Table
-    for x in range(0, len(listOfInputSequenceEncodedWords)):
+    for x in range(0, len(data)):
+
         cur.execute(
-            "INSERT INTO EncodedWords(InputSequenceEncodedWords,TargetSequenceEncodedWords,diacritizedCharacter,"
-            "undiacritizedCharacter,InputSequenceEncodedWordsInHexFormat,TargetSequenceEncodedWordsInHexFormat, "
+            "INSERT INTO EncodedWords("
+            "InputSequenceEncodedWords,"
+            "TargetSequenceEncodedWords,"
+            "diacritizedCharacter,"
+            "undiacritizedCharacter,"
+            "InputSequenceEncodedWordsInHexFormat,"
+            "TargetSequenceEncodedWordsInHexFormat, "
             "Diacritics) "
             "VALUES ( "
             "%s,%s,%s,%s,%s,%s,%s)",
-            (listOfInputSequenceEncodedWords[x], listOfTargetSequenceEncodedWords[x], diacritizedCharacter[x],
-             unDiacritizedCharacter[x], listOfInputSequenceEncodedWordsInHexFormat[x],
-             listOfTargetSequenceEncodedWordsInHexFormat[x], DiacriticsOnly[x]))
+            (encoded_input[x],
+             encoded_target[x],
+             data[x].diacritizedCharacter,
+             data[x].undiacritizedCharacter,
+             encoded_input_in_hex_format[x],
+             encoded_target_in_hex_format[x],
+             data[x].diacritics))
+
+
     x = len(randomized_Sentence)
     y = randomized_Sentence[len(randomized_Sentence) - 1]
     for each_sent in randomized_Sentence:
-        if trainingCounter >= 0:
+        if training_counter >= 0:
             for each_letter in each_sent:
                 cur.execute(
                     "INSERT INTO ParsedDocument(DocName, UnDiacritizedCharacter,DiacritizedCharacter,LetterType,"
@@ -399,7 +383,7 @@ def pushDataIntoDB():
                     "%s,%s,%s,%s,%s)",
                     (each_letter[0], each_letter[1], each_letter[2], "training", each_letter[3], each_letter[4], each_letter[5], each_letter[6], each_letter[7],
                      each_letter[8], each_letter[9], each_letter[10]))
-            trainingCounter -= 1
+                training_counter -= 1
         else:
             for each_letter in each_sent:
                 cur.execute(
@@ -422,19 +406,6 @@ def pushDataIntoDB():
     db.close()
 
 
-def resetAllLists():
-    del unDiacritizedCharacter[:]
-    del diacritizedCharacter[:]
-    del listOfDbSentenceNumber[:]
-    del listOfDBWords[:]
-    del listOfInputSequenceEncodedWords[:]
-    del listOfTargetSequenceEncodedWords[:]
-    del listOfInputSequenceEncodedWordsInHexFormat[:]
-    del listOfTargetSequenceEncodedWordsInHexFormat[:]
-    del listOfWordsInSent[:]
-    del list_of_all_sentence[:]
-    del randomized_Sentence[:]
-
 if __name__ == "__main__":
     listOfFilesPaths, ListOfDocs = get_all_files()
 
@@ -443,15 +414,16 @@ if __name__ == "__main__":
         selected_doc, raw_data = read_doc(eachDoc, listOfFilesPaths, ListOfDocs)
         cleaned_data = extract_and_clean_words_from_doc(raw_data)
         listOfWordsAndCorrespondingSentenceNumber = bind_words_with_sentence_number_in_this_doc(selected_doc, cleaned_data, raw_data)
-        listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(listOfWordsAndCorrespondingSentenceNumber)
+        listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(copy.deepcopy(listOfWordsAndCorrespondingSentenceNumber))
 
         encodedInput, encodedInputInHexFormat = character_encoder(listOfUndiacritizedWords)
-        encodedTarget, encodedTargetInHexFormat = character_encoder(cleaned_data)
+        encodedTarget, encodedTargetInHexFormat = character_encoder(listOfWordsAndCorrespondingSentenceNumber)
         dbList = extract_each_character_from_word_with_its_diacritization(
             listOfWordsAndCorrespondingSentenceNumber, listOfUndiacritizedWords)
         connectToDB()
-        prepare_list_for_randomization()
-        randomize_Data()
-        pushDataIntoDB()
-        resetAllLists()
+
+        list_to_be_randomized = prepare_list_for_randomization(dbList)
+        list_of_randomized_sentences = randomize_Data(list_to_be_randomized)
+        pushDataIntoDB(list_of_randomized_sentences, encodedInput, encodedInputInHexFormat, encodedTarget, encodedTargetInHexFormat)
+
 
