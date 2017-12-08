@@ -407,17 +407,17 @@ def push_data_into_db(doc, data_chars, db_sentences):
                     "Diacritics, "
                     "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
                     (doc,
-                     each_letter_object[x].undiacritizedCharacter,
-                     each_letter_object[x].diacritizedCharacter,
+                     each_letter_object.undiacritizedCharacter,
+                     each_letter_object.diacritizedCharacter,
                      'training',
-                     each_letter_object[x].sentenceNumber,
-                     each_letter_object[x].diacritizedWord,
-                     data_chars[x].encoded_input,
-                     data_chars[x].encoded_output,
-                     data_chars[x].encoded_input_in_hex_format,
-                     data_chars[x].encoded_output_in_hex_format,
-                     each_letter_object[x].diacritics,
-                     each_letter_object[x].undiacritizedWord))
+                     each_letter_object.sentenceNumber,
+                     each_letter_object.diacritizedWord,
+                     each_letter_object.encoded_input,
+                     each_letter_object.encoded_output,
+                     each_letter_object.encoded_input_in_hex_format,
+                     each_letter_object.encoded_output_in_hex_format,
+                     each_letter_object.diacritics,
+                     each_letter_object.undiacritizedWord))
                 training_counter -= 1
         else:
             for each_letter_object in each_sent:
@@ -436,17 +436,17 @@ def push_data_into_db(doc, data_chars, db_sentences):
                     "Diacritics, "
                     "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
                     (doc,
-                     each_letter_object[x].undiacritizedCharacter,
-                     each_letter_object[x].diacritizedCharacter,
+                     each_letter_object.undiacritizedCharacter,
+                     each_letter_object.diacritizedCharacter,
                      'testing',
-                     each_letter_object[x].sentenceNumber,
-                     each_letter_object[x].diacritizedWord,
-                     data_chars[x].encoded_input,
-                     data_chars[x].encoded_output,
-                     data_chars[x].encoded_input_in_hex_format,
-                     data_chars[x].encoded_output_in_hex_format,
-                     each_letter_object[x].diacritics,
-                     each_letter_object[x].undiacritizedWord))
+                     each_letter_object.sentenceNumber,
+                     each_letter_object.diacritizedWord,
+                     each_letter_object.encoded_input,
+                     each_letter_object.encoded_output,
+                     each_letter_object.encoded_input_in_hex_format,
+                     each_letter_object.encoded_output_in_hex_format,
+                     each_letter_object.diacritics,
+                     each_letter_object.undiacritizedWord))
 
     for x in range(0, len(data_chars)):
         cur.execute(
@@ -478,6 +478,6 @@ if __name__ == "__main__":
 
         list_to_be_randomized = prepare_list_for_randomization(data)
         list_of_randomized_characters,  list_of_randomized_sentences = randomize_data(list_to_be_randomized)
-        push_data_into_db(doc_name, list_of_randomized_characters, list_of_randomized_sentences)
+        push_data_into_db(selected_doc, list_of_randomized_characters, list_of_randomized_sentences)
 
 
