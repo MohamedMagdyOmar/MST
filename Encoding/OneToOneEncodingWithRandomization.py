@@ -18,7 +18,7 @@ final_ListOfUndiacritized_Word = []
 listOfArabicDiacriticsUnicode = [["064b", "064c", "064d", "064e", "064f", "0650", "0651", "0652", "0670"],
                                  [1, 2, 3, 4, 5, 6, 8, 7, 9]]
 
-docname = ""
+
 def declareGlobalVariables():
     global wordCount
     wordCount = 0
@@ -29,33 +29,33 @@ def declareGlobalVariables():
     list_of_all_sentence = []
 
 
-def findFiles():
-    global listOfFilesPathes
-    global listOfDocName
-    listOfFilesPathes = []
-    listOfDocName = []
-    for file in os.listdir("D:\MasterRepo\MSTRepo\PaperCorpus\Doc"):
-        if file.endswith(".txt"):
-            listOfFilesPathes.append(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", file))
-            listOfDocName.append(file)
-            print(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", file))
+def get_all_files():
+    list_of_files_paths = []
+    list_of_doc_name = []
+    for file_name in os.listdir("D:\MasterRepo\MSTRepo\PaperCorpus\Doc"):
+        if file_name.endswith(".txt"):
+            list_of_files_paths.append(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", file_name))
+            list_of_doc_name.append(file_name)
+            print(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", file_name))
+
+    return list_of_files_paths, list_of_doc_name
 
 
-def readDoc(eachdoc):
-    global read_data
-    global docName
-    f = open(listOfFilesPathes[eachdoc], 'r')
-    docName = listOfDocName[eachdoc]
-    read_data = f.readlines()
+def read_doc(each_doc, list_of_paths, list_of_docs):
+
+    f = open(list_of_paths[each_doc], 'r')
+    docName = list_of_docs[each_doc]
+    data = f.readlines()
     f.close()
 
+    return doc_name, data
 
-def extractAndCleanWordsFromDoc():
-    global listOfWords
-    listOfWords = []
-    for eachSentence in read_data:
-        wordsInSentence = eachSentence.split()
-        for word in wordsInSentence:
+
+def extract_and_clean_words_from_doc(data):
+    list_of_words = []
+    for eachSentence in data:
+        words_in_sentence = eachSentence.split()
+        for word in words_in_sentence:
             word = word.decode('utf-8', 'ignore') # variable line
             word = re.sub(u'[-;}()/]', '', word)
             word = re.sub(u'[-;}()0123456789/]', '', word)
@@ -79,48 +79,46 @@ def extractAndCleanWordsFromDoc():
             word = re.sub(u'[o]', '', word)
             word = re.sub(u'[t]', '', word)
             if not (word == u''):
-                listOfWords.append(word)
+                list_of_words.append(word)
+
+    return list_of_words
 
 
-def extractSentencesFromDoc():
+def bind_words_with_sentence_number_in_this_doc(doc_name, list_of_words, raw_data):
     global wordCount
-    global listOfWordsInSent
-    global ListOfWordsWithPunctuation
     global sentenceCount
-    #wordCount = 0
-    listOfWordsInSent = []
-    ListOfWordsWithPunctuation = []
-    #sentenceCount = 1
+    list_of_words_in_doc_and_corresponding_sentence_number = []
 
-    if docName != 'quran-simple.txt' and not (docName.startswith('ANN2002')):
-        for word in listOfWords:
-
+    if doc_name != 'quran-simple.txt' and not (doc_name.startswith('ANN2002')):
+        for word in list_of_words:
             if not (word in listOfPunctuationBySymbol):
                 if word.find(u'.') != -1:
                     wordCount += 1
-
-                    ListOfWordsWithPunctuation.append([word, sentenceCount])
-
                     word = re.sub(u'[.]', '', word)
                     if word != u'':
-                        listOfWordsInSent.append([word, sentenceCount])
+                        list_of_words_in_doc_and_corresponding_sentence_number.append([word, sentenceCount])
                     sentenceCount += 1
                 else:
                     wordCount += 1
-                    listOfWordsInSent.append([word, sentenceCount])
-                    ListOfWordsWithPunctuation.append([word, sentenceCount])
+                    list_of_words_in_doc_and_corresponding_sentence_number.append([word, sentenceCount])
             else:
-                ListOfWordsWithPunctuation.append([word, sentenceCount])
                 sentenceCount += 1
+                list_of_words_in_doc_and_corresponding_sentence_number.append(["bos", sentenceCount])
     else:
         sentenceCount = 0
         wordCount = 0
-        for eachVersus in read_data:
+        for eachVersus in raw_data:
             sentenceCount += 1
-            eachWordInVersus = eachVersus.split()
-            for eachWord in eachWordInVersus:
+            each_word_in_versus = eachVersus.split()
+            list_of_words_in_doc_and_corresponding_sentence_number.append(["bos", sentenceCount])
+            for eachWord in each_word_in_versus:
                 wordCount += 1
-                listOfWordsInSent.append([eachWord, sentenceCount])
+                list_of_words_in_doc_and_corresponding_sentence_number.append([eachWord, sentenceCount])
+                list_of_words_in_doc_and_corresponding_sentence_number.append(["space", sentenceCount])
+
+        list_of_words_in_doc_and_corresponding_sentence_number.pop()
+        list_of_words_in_doc_and_corresponding_sentence_number.append(["eos", sentenceCount])
+    return list_of_words_in_doc_and_corresponding_sentence_number
 
 
 def encodingDiacritizedCharacter():
@@ -471,13 +469,14 @@ def resetAllLists():
     del randomized_Sentence[:]
 
 if __name__ == "__main__":
-    findFiles()
+    listOfFilesPaths, ListOfDocs = get_all_files()
     declareGlobalVariables()
-    for eachDoc in range(0, len(listOfFilesPathes)):
-        docname = listOfFilesPathes[eachDoc]
-        readDoc(eachDoc)
-        extractAndCleanWordsFromDoc()
-        extractSentencesFromDoc()
+    for eachDoc in range(0, len(listOfFilesPaths)):
+        doc_name = listOfFilesPaths[eachDoc]
+        selected_doc, raw_data = read_doc(eachDoc, listOfFilesPaths, ListOfDocs)
+        cleaned_data = extract_and_clean_words_from_doc(raw_data)
+        bind_words_with_sentence_number_in_this_doc(doc_name, cleaned_data, raw_data)
+
         encodingDiacritizedCharacter()
         # encodingunDiacritizedCharacter()
         #  convertToString()
