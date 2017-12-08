@@ -362,7 +362,7 @@ def randomize_data(data):
     return randomized_characters, randomized_sentence
 
 
-def push_data_into_db(doc, data_chars, db_sentences):
+def push_data_into_db(doc, data_chars, db_sentences, list_of_words_and_corresponding_sentence_number):
 
     required_percentage_for_validation = math.ceil((len(db_sentences) * 12) / 100)
     training_counter = len(db_sentences) - required_percentage_for_validation
@@ -418,7 +418,7 @@ def push_data_into_db(doc, data_chars, db_sentences):
                      each_letter_object.encoded_output_in_hex_format,
                      each_letter_object.diacritics,
                      each_letter_object.undiacritizedWord))
-                training_counter -= 1
+            training_counter -= 1
         else:
             for each_letter_object in each_sent:
                 cur.execute(
@@ -448,10 +448,10 @@ def push_data_into_db(doc, data_chars, db_sentences):
                      each_letter_object.diacritics,
                      each_letter_object.undiacritizedWord))
 
-    for x in range(0, len(data_chars)):
+    for each_word in list_of_words_and_corresponding_sentence_number:
         cur.execute(
             "INSERT INTO ListOfWordsAndSentencesInEachDoc(word,SentenceNumber,DocName) VALUES (%s,%s,%s)",
-            (data_chars[x].diacritizedWord, data_chars[x].sentenceNumber, doc))
+            (each_word[0], each_word[1], doc))
 
     db.commit()
     db.close()
@@ -478,6 +478,6 @@ if __name__ == "__main__":
 
         list_to_be_randomized = prepare_list_for_randomization(data)
         list_of_randomized_characters,  list_of_randomized_sentences = randomize_data(list_to_be_randomized)
-        push_data_into_db(selected_doc, list_of_randomized_characters, list_of_randomized_sentences)
+        push_data_into_db(selected_doc, list_of_randomized_characters, list_of_randomized_sentences, listOfWordsAndCorrespondingSentenceNumber)
 
 
