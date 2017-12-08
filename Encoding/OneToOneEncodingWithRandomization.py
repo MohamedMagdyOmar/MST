@@ -21,6 +21,10 @@ class DbObject:
 
     undiacritizedCharacter = "",
     undiacritizedWord = ""
+    encoded_input = ""
+    encoded_input_in_hex_format = ""
+    encoded_output = ""
+    encoded_output_in_hex_format = ""
 
     diacritics = "",
     sentenceNumber = 0
@@ -34,6 +38,12 @@ class DbObject:
 
         self.diacritics = ""
         self.sentenceNumber = ""
+
+        self.encoded_input = ""
+        self.encoded_input_in_hex_format = ""
+
+        self.encoded_output = ""
+        self.encoded_output_in_hex_format = ""
 
 
 def get_all_files():
@@ -298,7 +308,18 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
     return DbList
 
 
-def connectToDB():
+def collect_all_data_in_one_list(db_list, encoded_input, encoded_input_in_hex, encoded_output, encoded_output_in_hex):
+
+    for each_object, each_encoded_input, each_encoded_input_in_hex, each_encoded_output, each_encoded_output_in_hex in zip(db_list, encoded_input, encoded_input_in_hex, encoded_output, encoded_output_in_hex):
+        each_object.encoded_input = each_encoded_input
+        each_object.encoded_input_in_hex_format = each_encoded_input_in_hex
+        each_object.encoded_output = each_encoded_output
+        each_object.encoded_output_in_hex_format = each_encoded_output_in_hex
+
+    return db_list
+
+
+def connect_to_db():
     global db
     db = MySQLdb.connect(host="127.0.0.1",  # your host, usually localhost
                          user="root",  # your username
@@ -325,28 +346,29 @@ def prepare_list_for_randomization(db_data):
             intermediate_list = []
             intermediate_list.append(each_object)
             current_sentence_number += 1
+    list_of_sentence_objects.append(intermediate_list)
 
     return list_of_sentence_objects
 
 
-def randomize_Data(data):
+def randomize_data(data):
 
-    list_after_randomization = []
+    randomized_characters = []
     randomized_sentence = random.sample(data, len(data))
     for each_sentence_object in randomized_sentence:
         for each_letter_object in each_sentence_object:
-            list_after_randomization.append(each_letter_object)
+            randomized_characters.append(each_letter_object)
 
-    return list_after_randomization
+    return randomized_characters, randomized_sentence
 
 
-def pushDataIntoDB(data, encoded_input, encoded_input_in_hex_format, encoded_target, encoded_target_in_hex_format):
+def push_data_into_db(doc, data_chars, db_sentences):
 
-    required_percentage_for_validation = math.ceil((len(data) * 12) / 100)
-    training_counter = len(data) - required_percentage_for_validation
+    required_percentage_for_validation = math.ceil((len(db_sentences) * 12) / 100)
+    training_counter = len(db_sentences) - required_percentage_for_validation
 
     # Part A : filling "Encoded Words" Table
-    for x in range(0, len(data)):
+    for x in range(0, len(data_chars)):
 
         cur.execute(
             "INSERT INTO EncodedWords("
@@ -359,48 +381,77 @@ def pushDataIntoDB(data, encoded_input, encoded_input_in_hex_format, encoded_tar
             "Diacritics) "
             "VALUES ( "
             "%s,%s,%s,%s,%s,%s,%s)",
-            (encoded_input[x],
-             encoded_target[x],
-             data[x].diacritizedCharacter,
-             data[x].undiacritizedCharacter,
-             encoded_input_in_hex_format[x],
-             encoded_target_in_hex_format[x],
-             data[x].diacritics))
+            (data_chars[x].encoded_input,
+             data_chars[x].encoded_output,
+             data_chars[x].diacritizedCharacter,
+             data_chars[x].undiacritizedCharacter,
+             data_chars[x].encoded_input_in_hex_format,
+             data_chars[x].encoded_output_in_hex_format,
+             data_chars[x].diacritics))
 
-
-    x = len(randomized_Sentence)
-    y = randomized_Sentence[len(randomized_Sentence) - 1]
-    for each_sent in randomized_Sentence:
+    for each_sent in db_sentences:
         if training_counter >= 0:
-            for each_letter in each_sent:
+            for each_letter_object in each_sent:
                 cur.execute(
-                    "INSERT INTO ParsedDocument(DocName, UnDiacritizedCharacter,DiacritizedCharacter,LetterType,"
+                    "INSERT INTO ParsedDocument("
+                    "DocName, "
+                    "UnDiacritizedCharacter,"
+                    "DiacritizedCharacter,"
+                    "LetterType,"
                     "SentenceNumber, "
                     "Word, "
-                    "InputSequenceEncodedWords,TargetSequenceEncodedWords, InputSequenceEncodedWordsInHexFormat,"
-                    "TargetSequenceEncodedWordsInHexFormat, Diacritics, UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,"
-                    "%s, "
-                    "%s,%s,%s,%s,%s)",
-                    (each_letter[0], each_letter[1], each_letter[2], "training", each_letter[3], each_letter[4], each_letter[5], each_letter[6], each_letter[7],
-                     each_letter[8], each_letter[9], each_letter[10]))
+                    "InputSequenceEncodedWords,"
+                    "TargetSequenceEncodedWords, "
+                    "InputSequenceEncodedWordsInHexFormat,"
+                    "TargetSequenceEncodedWordsInHexFormat, "
+                    "Diacritics, "
+                    "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
+                    (doc,
+                     each_letter_object[x].undiacritizedCharacter,
+                     each_letter_object[x].diacritizedCharacter,
+                     'training',
+                     each_letter_object[x].sentenceNumber,
+                     each_letter_object[x].diacritizedWord,
+                     data_chars[x].encoded_input,
+                     data_chars[x].encoded_output,
+                     data_chars[x].encoded_input_in_hex_format,
+                     data_chars[x].encoded_output_in_hex_format,
+                     each_letter_object[x].diacritics,
+                     each_letter_object[x].undiacritizedWord))
                 training_counter -= 1
         else:
-            for each_letter in each_sent:
+            for each_letter_object in each_sent:
                 cur.execute(
-                    "INSERT INTO ParsedDocument(DocName, UnDiacritizedCharacter,DiacritizedCharacter,LetterType,"
+                    "INSERT INTO ParsedDocument("
+                    "DocName, "
+                    "UnDiacritizedCharacter,"
+                    "DiacritizedCharacter,"
+                    "LetterType,"
                     "SentenceNumber, "
                     "Word, "
-                    "InputSequenceEncodedWords,TargetSequenceEncodedWords, InputSequenceEncodedWordsInHexFormat,"
-                    "TargetSequenceEncodedWordsInHexFormat, Diacritics, UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,"
-                    "%s,%s,%s,%s,%s)",
-                    (each_letter[0], each_letter[1], each_letter[2], "testing", each_letter[3], each_letter[4],
-                    each_letter[5], each_letter[6], each_letter[7],
-                    each_letter[8], each_letter[9], each_letter[10]))
+                    "InputSequenceEncodedWords,"
+                    "TargetSequenceEncodedWords, "
+                    "InputSequenceEncodedWordsInHexFormat,"
+                    "TargetSequenceEncodedWordsInHexFormat, "
+                    "Diacritics, "
+                    "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
+                    (doc,
+                     each_letter_object[x].undiacritizedCharacter,
+                     each_letter_object[x].diacritizedCharacter,
+                     'testing',
+                     each_letter_object[x].sentenceNumber,
+                     each_letter_object[x].diacritizedWord,
+                     data_chars[x].encoded_input,
+                     data_chars[x].encoded_output,
+                     data_chars[x].encoded_input_in_hex_format,
+                     data_chars[x].encoded_output_in_hex_format,
+                     each_letter_object[x].diacritics,
+                     each_letter_object[x].undiacritizedWord))
 
-    for x in range(0, len(listOfWordsInSent)):
+    for x in range(0, len(data_chars)):
         cur.execute(
             "INSERT INTO ListOfWordsAndSentencesInEachDoc(word,SentenceNumber,DocName) VALUES (%s,%s,%s)",
-            (listOfWordsInSent[x][0], listOfWordsInSent[x][1], docName))
+            (data_chars[x].diacritizedWord, data_chars[x].sentenceNumber, doc))
 
     db.commit()
     db.close()
@@ -420,10 +471,13 @@ if __name__ == "__main__":
         encodedTarget, encodedTargetInHexFormat = character_encoder(listOfWordsAndCorrespondingSentenceNumber)
         dbList = extract_each_character_from_word_with_its_diacritization(
             listOfWordsAndCorrespondingSentenceNumber, listOfUndiacritizedWords)
-        connectToDB()
 
-        list_to_be_randomized = prepare_list_for_randomization(dbList)
-        list_of_randomized_sentences = randomize_Data(list_to_be_randomized)
-        pushDataIntoDB(list_of_randomized_sentences, encodedInput, encodedInputInHexFormat, encodedTarget, encodedTargetInHexFormat)
+        data = collect_all_data_in_one_list(dbList, encodedInput, encodedInputInHexFormat, encodedTarget, encodedTargetInHexFormat)
+
+        connect_to_db()
+
+        list_to_be_randomized = prepare_list_for_randomization(data)
+        list_of_randomized_characters,  list_of_randomized_sentences = randomize_data(list_to_be_randomized)
+        push_data_into_db(doc_name, list_of_randomized_characters, list_of_randomized_sentences)
 
 
