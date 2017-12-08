@@ -171,7 +171,7 @@ def create_netcdf_target_classes():
                     targetClass.append(listOfDiacritizedCharacter[searchCounter][0])
                     searchCounter = 0
             except:
-                x = 1
+                raise ValueError("Label Not Found")
             else:
                 searchCounter += 1
     afterWhileLoop = datetime.datetime.now()
@@ -276,7 +276,7 @@ def try_using_query(letter):
 
 
 if __name__ == "__main__":
-    availableDataSetTypes = ['testing']
+    availableDataSetTypes = ['training']
     columnNumberOf_SentenceNumber = 3
 
     create_mysql_connection()
