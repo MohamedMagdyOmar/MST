@@ -6,7 +6,7 @@ import datetime
 
 global punchNumber
 punchNumber = 0
-max_seq_tag_length = 10
+max_seq_tag_length = 4
 
 
 def create_mysql_connection():
@@ -29,7 +29,7 @@ def get_all_letters_of_corresponding_dataset_type(type_of_dataset):
                                              "SentenceNumber," \
                                              " Word, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
                                              " DiacritizedCharacter " \
-                                             "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset + "order by idCharacterNumber asc "
+                                             "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset
 
     cur.execute(listOfSelectedLettersAndSentencesQuery)
     global listOfSelectedLettersAndSentences
@@ -48,17 +48,17 @@ def execute_unchanged_sql_queries():
     global listOfUnDiacritizedCharacter
     listOfUnDiacritizedCharacter = cur.fetchall()
 
-    # commented because this is old way for diacritization
-    #listOfDiacritizedCharacterQuery = "select * from DiacOneHotEncoding "
-    #cur.execute(listOfDiacritizedCharacterQuery)
-    #global listOfDiacritizedCharacter
-    #listOfDiacritizedCharacter = cur.fetchall()
-
-    # commented because this is new way for diacritization
-    listOfDiacritizedCharacterQuery = "select * from distinctdiacritics "
+    # use this if you are going to predict character and diacritics
+    listOfDiacritizedCharacterQuery = "select * from DiacOneHotEncoding "
     cur.execute(listOfDiacritizedCharacterQuery)
     global listOfDiacritizedCharacter
     listOfDiacritizedCharacter = cur.fetchall()
+
+    # use this if you are going to predict diacritics only
+    # listOfDiacritizedCharacterQuery = "select * from distinctdiacritics "
+    # cur.execute(listOfDiacritizedCharacterQuery)
+    # global listOfDiacritizedCharacter
+    # listOfDiacritizedCharacter = cur.fetchall()
 
     executeChangedSQLQueriesEndTime = datetime.datetime.now()
     print "executeChangedSQLQueries takes : ", executeChangedSQLQueriesEndTime - executeChangedSQLQueriesStartTime
@@ -105,25 +105,29 @@ def create_netcdf_input():
 
     global purified_netcdf_input
     purified_netcdf_input = []
-    test = []
     # Create Data of Input Variable
     for eachItem in range(0, len(selected_letters_in_this_loop)):
         yourLabel = selected_letters_in_this_loop[eachItem][0]
+        un_diacritized_word = selected_letters_in_this_loop[eachItem][5]
         flag = True
         while flag:
-            try:
-                if listOfUnDiacritizedCharacter[searchCounter][1] == yourLabel:
-                    flag = False
-                    UnDiacritizedCharacterOneHotEncoding = map(int,
+            if listOfUnDiacritizedCharacter[searchCounter][1] == yourLabel:
+                flag = False
+                UnDiacritizedCharacterOneHotEncoding = map(int,
                                                            list(str(listOfUnDiacritizedCharacter[searchCounter][2])))
-                    searchCounter = 0
-                    test.append(np.array(UnDiacritizedCharacterOneHotEncoding))
-                    purified_netcdf_input.append(np.array(UnDiacritizedCharacterOneHotEncoding))
-                else:
-                    searchCounter += 1
-
-            except:
-                x = 1
+                try:
+                    if yourLabel == 'space' or yourLabel == 'eos' or yourLabel == 'bos':
+                        UnDiacritizedCharacterOneHotEncoding.append(0)
+                    elif un_diacritized_word != selected_letters_in_this_loop[(eachItem + 1)][5]:
+                        UnDiacritizedCharacterOneHotEncoding.append(1)
+                    else:
+                        UnDiacritizedCharacterOneHotEncoding.append(0)
+                except:
+                    x = 1
+                searchCounter = 0
+                purified_netcdf_input.append(np.array(UnDiacritizedCharacterOneHotEncoding))
+            else:
+                searchCounter += 1
 
     execute_create_netcdf_Input_end_time = datetime.datetime.now()
     print "createNetCDFInput takes : ", execute_create_netcdf_Input_end_time - execute_create_netcdf_Input_Start_Time
@@ -138,13 +142,19 @@ def create_netcdf_seq_length():
 
     # Create Data of SEQ Length Variable
     for eachItem in range(0, len(selected_letters_in_this_loop)):
-
-        if selected_letters_in_this_loop[eachItem][3] == sentenceNumber:
-            letterCounterForEachSentence += 1
-        else:
-            seq_lengths.append(letterCounterForEachSentence)
-            sentenceNumber = selected_letters_in_this_loop[eachItem][3]
-            letterCounterForEachSentence = 1
+        try:
+            if selected_letters_in_this_loop[eachItem][3] == sentenceNumber:
+                letterCounterForEachSentence += 1
+            else:
+                seq_lengths.append(letterCounterForEachSentence)
+                prev = sentenceNumber
+                sentenceNumber = selected_letters_in_this_loop[eachItem][3]
+                print (int(sentenceNumber) - int(prev))
+                letterCounterForEachSentence = 1
+                if (int(sentenceNumber) - int(prev)) == 2:
+                    x = 1
+        except:
+            x = 1
 
     seq_lengths.append(letterCounterForEachSentence) #hereeeeeeeeeeeeeeeeeeeeeeeeeee
 
@@ -159,19 +169,15 @@ def create_netcdf_target_classes():
     targetClass = []
     beforeWhileLoop = datetime.datetime.now()
     for eachItem in range(0, len(selected_letters_in_this_loop)):
-        yourLabel = selected_letters_in_this_loop[eachItem][1]
-        searchCounter = 0
-        # c = hex(ord(yourLabel))
+        yourLabel = selected_letters_in_this_loop[eachItem][7]
         OneHotTargetClassNotFound = True
 
         while OneHotTargetClassNotFound:
-            try:
-                if listOfDiacritizedCharacter[searchCounter][1] == yourLabel:
-                    OneHotTargetClassNotFound = False
-                    targetClass.append(listOfDiacritizedCharacter[searchCounter][0])
-                    searchCounter = 0
-            except:
-                raise ValueError("Label Not Found")
+
+            if listOfDiacritizedCharacter[searchCounter][1] == yourLabel:
+                OneHotTargetClassNotFound = False
+                targetClass.append(listOfDiacritizedCharacter[searchCounter][0])
+                searchCounter = 0
             else:
                 searchCounter += 1
     afterWhileLoop = datetime.datetime.now()
@@ -236,9 +242,8 @@ def create_netcdf_file(dataset_type):
     dataset.createDimension('maxLabelLength', len(purified_labels[0]))  # you get this value from the array 'labels'
     dataset.createDimension('numSeqs', len(seq_lengths))
 
-
     #  added due to error in running library
-    dataset.createDimension('maxSeqTagLength', 10)
+    dataset.createDimension('maxSeqTagLength', max_seq_tag_length)
 
     # create the variables
     netCDFLabels = dataset.createVariable('labels', 'S1', ('numLabels', 'maxLabelLength'))
@@ -254,8 +259,10 @@ def create_netcdf_file(dataset_type):
     netCDFTargetClasses[:] = purified_target_class
 
     netCDFSeqTags = dataset.createVariable('seqTags', 'S1', ('numSeqs', 'maxSeqTagLength'))
-    netCDFSeqTags[:] = seq_tag_sentences
-
+    try:
+        netCDFSeqTags[:] = seq_tag_sentences
+    except:
+        x = 1
     # write the data to disk
     print "writing data to", outputFilename
     dataset.close()
