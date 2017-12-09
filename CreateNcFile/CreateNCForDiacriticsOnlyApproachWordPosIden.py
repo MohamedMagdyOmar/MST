@@ -27,7 +27,7 @@ def get_all_letters_of_corresponding_dataset_type(type_of_dataset):
 
     listOfSelectedLettersAndSentencesQuery = "select UnDiacritizedCharacter, Diacritics, LetterType, " \
                                              "SentenceNumber," \
-                                             " Word, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
+                                             " Word, UnDiacritizedWord,InputSequenceEncodedWords, TargetSequenceEncodedWords," \
                                              " DiacritizedCharacter " \
                                              "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset + "order by idCharacterNumber asc "
 
@@ -105,10 +105,11 @@ def create_netcdf_input():
 
     global purified_netcdf_input
     purified_netcdf_input = []
-    test = []
+
     # Create Data of Input Variable
     for eachItem in range(0, len(selected_letters_in_this_loop)):
         yourLabel = selected_letters_in_this_loop[eachItem][0]
+        un_diacritized_word = selected_letters_in_this_loop[eachItem][5]
         flag = True
         while flag:
             try:
@@ -116,8 +117,17 @@ def create_netcdf_input():
                     flag = False
                     UnDiacritizedCharacterOneHotEncoding = map(int,
                                                            list(str(listOfUnDiacritizedCharacter[searchCounter][2])))
+                    try:
+                        if yourLabel == 'space' or yourLabel == 'eos' or yourLabel == 'bos':
+                            UnDiacritizedCharacterOneHotEncoding.append(0)
+                        elif un_diacritized_word != selected_letters_in_this_loop[(eachItem + 1)][5]:
+                            UnDiacritizedCharacterOneHotEncoding.append(1)
+                        else:
+                            UnDiacritizedCharacterOneHotEncoding.append(0)
+                    except:
+                        x = 1
+
                     searchCounter = 0
-                    test.append(np.array(UnDiacritizedCharacterOneHotEncoding))
                     purified_netcdf_input.append(np.array(UnDiacritizedCharacterOneHotEncoding))
                 else:
                     searchCounter += 1
