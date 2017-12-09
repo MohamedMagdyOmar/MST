@@ -27,7 +27,7 @@ def get_all_letters_of_corresponding_dataset_type(type_of_dataset):
 
     listOfSelectedLettersAndSentencesQuery = "select UnDiacritizedCharacter, Diacritics, LetterType, " \
                                              "SentenceNumber," \
-                                             " Word, UnDiacritizedWord,InputSequenceEncodedWords, TargetSequenceEncodedWords," \
+                                             " Word, UnDiacritizedWord, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
                                              " DiacritizedCharacter " \
                                              "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset + "order by idCharacterNumber asc "
 

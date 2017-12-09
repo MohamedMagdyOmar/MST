@@ -23,22 +23,23 @@ def create_mysql_connection():
 
 
 def get_all_letters_of_corresponding_dataset_type(type_of_dataset):
-    execute_calculate_total_number_Of_sentences_startTime = datetime.datetime.now()
 
-    listOfSelectedLettersAndSentencesQuery = "select UnDiacritizedCharacter, Diacritics, LetterType, " \
+    execute_calculate_total_number_of_sentences_start_time = datetime.datetime.now()
+
+    list_of_selected_letters_and_sentences_query = "select UnDiacritizedCharacter, Diacritics, LetterType, " \
                                              "SentenceNumber," \
                                              " Word, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
                                              " DiacritizedCharacter " \
                                              "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset
 
-    cur.execute(listOfSelectedLettersAndSentencesQuery)
+    cur.execute(list_of_selected_letters_and_sentences_query)
     global listOfSelectedLettersAndSentences
     listOfSelectedLettersAndSentences = []
     listOfSelectedLettersAndSentences = cur.fetchall()
 
     execute_calculate_total_number_of_sentence_end_time = datetime.datetime.now()
     print "get_all_letters_of_corresponding_dataset_type takes : ", execute_calculate_total_number_of_sentence_end_time - \
-                                                                    execute_calculate_total_number_Of_sentences_startTime
+                                                                    execute_calculate_total_number_of_sentences_start_time
 
 
 def execute_unchanged_sql_queries():
