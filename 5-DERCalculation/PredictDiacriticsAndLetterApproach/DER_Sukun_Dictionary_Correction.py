@@ -654,7 +654,7 @@ if __name__ == "__main__":
                                                                chars_count_for_each_word_in_current_sentence)
         # end of get character position
 
-        # DER Calculation
+        # DER_Testing Calculation
         list_of_error = get_diacritization_error(list_of_chars_in_sent_after_sukun_and_dict_correction,
                                                  expected_letters_after_sukun_correction,
                                                  selected_sentence)
@@ -663,7 +663,7 @@ if __name__ == "__main__":
                                                         location_of_each_char_for_actual_op,
                                                         location_of_each_char_for_expected_op,
                                                         selected_sentence)
-        # End DER Calculation
+        # End DER_Testing Calculation
 
         excel1 = current_row_excel_1
         current_row_excel_1 = write_data_into_excel_file(list_of_error, selected_sentence,
