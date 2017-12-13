@@ -39,15 +39,20 @@ class LetterPosition:
 class MyTestCase1(unittest.TestCase):
     selected_words = []
     selected_letters = []
+    chars_count = []
+    list_of_actual_letters_with_its_location = []
     # Only use setUp() and tearDown() if necessary
 
     def setUp(self):
 
         connect_to_db()
 
-        query_1 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (select arabic_letter from arabic_letters_without_diacritics where id = 7)"
-        query_2 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (select arabic_letter from arabic_letters_without_diacritics where id = 2)"
-        query_3 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (select arabic_letter from arabic_letters_without_diacritics where id = 34)"
+        query_1 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
+                  "select arabic_letter from arabic_letters_without_diacritics where id = 7) "
+        query_2 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
+                  "select arabic_letter from arabic_letters_without_diacritics where id = 2) "
+        query_3 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
+                  "select arabic_letter from arabic_letters_without_diacritics where id = 34) "
 
         self.selected_words = get_query_data(query_1)
         self.selected_words += get_query_data(query_2)
@@ -66,9 +71,13 @@ class MyTestCase1(unittest.TestCase):
                     self.selected_letters.pop()
                     self.selected_letters.append(comp)
 
+        self.chars_count = DERCalculation.get_chars_count_for_each_word_in_current_sentence(self.selected_words)
+        self.list_of_actual_letters_with_its_location = DERCalculation.\
+            get_location_of_each_character_in_current_sentence(self.selected_letters, self.chars_count)
+
     def test_feature_one(self):
 
-        DERCalculation.fatha_correction(self.selected_words)
+        DERCalculation.fatha_correction(self.list_of_actual_letters_with_its_location)
         y = 1
 
 

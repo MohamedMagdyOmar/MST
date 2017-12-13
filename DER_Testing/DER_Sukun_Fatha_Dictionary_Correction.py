@@ -11,6 +11,7 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 from copy import deepcopy
 import locale
+import unidecode
 
 
 class LetterPosition:
@@ -258,37 +259,133 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
     actual_letters_after_fatha_correction = []
 
     for each_letter_object in __list_of_actual_letters_with_its_location:
-        actual_letters_after_fatha_correction.append((each_letter_object))
-        if ((each_letter_object.letter) in letters_of_fatha_correction) and (each_letter_object.location != 'first'):
+        actual_letters_after_fatha_correction.append(each_letter_object)
+        character = remove_diacritics(each_letter_object.letter)
+        if (character in letters_of_fatha_correction) and (each_letter_object.location != 'first'):
 
-            # get prev char
-            spaChar = unicodedata.normalize('NFC', ((__list_of_actual_letters_with_its_location[counter - 1]).letter))
-            for c in spaChar:
-                if not unicodedata.combining(c):
-                    overall = c
-                    comp = unicodedata.normalize('NFC', c)
-                    actual_letters_after_fatha_correction[counter - 1].letter = comp
+            letter_caused_fatha_correction = character
+            prev_char = unicodedata.normalize('NFC', (__list_of_actual_letters_with_its_location[counter - 1]).letter)
 
-                elif c == u'َ' or c == u'ّ' or c == u'ً':
-                    overall += c
-                    comp = unicodedata.normalize('NFC', overall)
-                    actual_letters_after_fatha_correction[counter - 1].letter = comp
+            if letter_caused_fatha_correction == u'ة':
+                corrected_char = correct_teh_marbota_prev_char(prev_char, each_letter_object)
 
-                else:
-                    if each_letter_object.location == 'middle':
-                        c = u'َ'
-                    elif each_letter_object.location == 'last':
-                        c = u'ً'
-                    overall += c
-                    comp = unicodedata.normalize('NFC', overall)
-                    actual_letters_after_fatha_correction[counter - 1].letter = comp
+            elif letter_caused_fatha_correction == u'ا':
+                corrected_char = correct_alef_maksora_prev_char(
+                    __list_of_actual_letters_with_its_location[counter - 2],
+                    __list_of_actual_letters_with_its_location[counter - 1],
+                    each_letter_object)
+
+            elif letter_caused_fatha_correction == u'ى':
+                corrected_char = correct_alef_prev_char(prev_char, each_letter_object)
+
+            actual_letters_after_fatha_correction[counter - 1].letter = corrected_char
             counter += 1
         else:
             counter += 1
 
-        #counter += 1
-
     return actual_letters_after_fatha_correction
+
+
+def remove_diacritics(character):
+    nkfd_form = unicodedata.normalize('NFKD', unicode(character))
+    return u"".join([c for c in nkfd_form if not unicodedata.combining(c)])
+
+
+def correct_teh_marbota_prev_char(prev_char, each_letter_object):
+
+    for c in prev_char:
+        if not unicodedata.combining(c):
+            overall = c
+            comp = unicodedata.normalize('NFC', c)
+
+        elif c == u'َ' or c == u'ّ' or c == u'ً':
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
+
+        else:
+            if each_letter_object.location != 'middle':
+                raise "Special case not handled in correct_teh_marbota_prev_char"
+
+            c = u'َ'
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
+
+    return comp
+
+
+def correct_alef_prev_char(prev_prev_char, prev_char, each_letter_object):
+    prev_char_undiacritized = remove_diacritics(prev_char.letter)
+
+    if prev_char_undiacritized == u'ب' and prev_char.location == 'first' and each_letter_object.location == 'middle':
+        for c in prev_char.letter:
+            if not unicodedata.combining(c):
+                overall = c
+                comp = unicodedata.normalize('NFC', c)
+
+            else:
+                c = u'ِ'
+
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+
+    # prev_prev has damma
+    elif prev_char_undiacritized == u'و' and prev_char.location == 'middle' and each_letter_object.location == 'last' and u'ُ' in prev_prev_char.letter:
+        for c in prev_char.letter:
+            if not unicodedata.combining(c):
+                comp = unicodedata.normalize('NFC', c)
+
+    elif prev_char_undiacritized == u'و' and prev_char.location == 'middle' and each_letter_object.location == 'last':
+        for c in prev_char.letter:
+            if not unicodedata.combining(c):
+                overall = c
+                comp = unicodedata.normalize('NFC', c)
+
+            else:
+                c = u'َ'
+
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+
+    else:
+        for c in prev_char.letter:
+            if not unicodedata.combining(c):
+                overall = c
+                comp = unicodedata.normalize('NFC', c)
+
+            elif c == u'َ' or c == u'ّ' or c == u'ً':
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+
+            else:
+                if each_letter_object.location == 'middle':
+                    c = u'َ'
+                elif each_letter_object.location == 'last':
+                    c = u'ً'
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+
+    return comp
+
+
+def correct_alef_maksora_prev_char(prev_char, each_letter_object):
+    for c in prev_char:
+        if not unicodedata.combining(c):
+            overall = c
+            comp = unicodedata.normalize('NFC', c)
+
+        elif c == u'َ' or c == u'ّ' or c == u'ً':
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
+
+        else:
+            if each_letter_object.location == 'middle':
+                c = u'َ'
+            elif each_letter_object.location == 'last':
+                c = u'ً'
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
+
+    return comp
 
 
 def reform_word_after_sukun_and_fatha_correction(list_of_chars_with_its_position):
