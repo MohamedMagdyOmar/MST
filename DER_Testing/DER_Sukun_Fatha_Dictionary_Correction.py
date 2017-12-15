@@ -259,7 +259,7 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
     actual_letters_after_fatha_correction = []
 
     for each_letter_object in __list_of_actual_letters_with_its_location:
-        if counter == 925:
+        if counter == 2223:
             x = 1
         actual_letters_after_fatha_correction.append(each_letter_object)
         character = remove_diacritics(each_letter_object.letter)
@@ -270,10 +270,11 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
             prev_char_object = __list_of_actual_letters_with_its_location[counter - 1]
             prev_prev_char_object = __list_of_actual_letters_with_its_location[counter - 2]
             if (counter + 1) <= (len(__list_of_actual_letters_with_its_location) - 1):
-                try:
-                    next_char_object = __list_of_actual_letters_with_its_location[counter + 1]
-                except:
-                    x = 1
+                next_char_object = __list_of_actual_letters_with_its_location[counter + 1]
+
+            if (counter + 2) <= (len(__list_of_actual_letters_with_its_location) - 1):
+                next_next_char_object = __list_of_actual_letters_with_its_location[counter + 2]
+
             prev_char_object.letter = unicodedata.normalize('NFC', prev_char_object.letter)
             prev_prev_char_object.letter = unicodedata.normalize('NFC', prev_prev_char_object.letter)
 
@@ -282,9 +283,16 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
 
             elif letter_caused_fatha_correction == u'ا':
 
-                if remove_diacritics(prev_char_object.letter) == u'ب' \
+                # وَبِالْآخِرَةِ , بِالْعُدْوَةِ
+                if (remove_diacritics(prev_char_object.letter) == u'ب' \
                         and prev_char_object.location == 'first' \
-                        and remove_diacritics(next_char_object.letter) == u'ل':
+                        and next_char_object.letter == u'ل') or \
+                        (remove_diacritics(prev_char_object.letter) == u'ب'
+                         and prev_char_object.location == 'middle'
+                         and next_char_object.letter == u'ل'
+                         and remove_diacritics(prev_prev_char_object.letter == u"و")
+                         and prev_prev_char_object.location == "first"
+                         ):
                     corrected_char = correct_alef_prev_char_ba2_case(prev_char_object)
 
                 # يَقُولُوا , وَرُدُّوا
@@ -303,7 +311,12 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
                     corrected_char = correct_alef_prev_char_normal_case(prev_char_object)
 
                 # مِائَةَ
-                elif remove_diacritics(each_letter_object.letter) == u'ا' and remove_diacritics(next_char_object.letter) == u'ئ':
+                elif remove_diacritics(each_letter_object.letter) == u'ا' \
+                        and remove_diacritics(next_char_object.letter) == u'ئ' \
+                        and remove_diacritics(prev_char_object.letter) == u'م' \
+                        and prev_char_object.location == "first" \
+                        and next_next_char_object.location == "last" \
+                        and remove_diacritics(next_next_char_object.letter) == u'ة':
                     corrected_char = correct_alef_prev_char_hamza_case(prev_char_object)
 
                 else:
@@ -331,7 +344,8 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
 
 def remove_diacritics(character):
     nkfd_form = unicodedata.normalize('NFKD', unicode(character))
-    return u"".join([c for c in nkfd_form if not unicodedata.combining(c) or c == u'ٓ' or c == u'ٔ' ])
+    char = u"".join([c for c in nkfd_form if not unicodedata.combining(c) or c == u'ٓ' or c == u'ٔ' or c == u'ٕ' ])
+    return char
 
 
 def correct_teh_marbota_prev_char(prev_char):
