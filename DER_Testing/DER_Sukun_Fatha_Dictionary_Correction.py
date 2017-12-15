@@ -259,6 +259,8 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
     actual_letters_after_fatha_correction = []
 
     for each_letter_object in __list_of_actual_letters_with_its_location:
+        if counter == 925:
+            x = 1
         actual_letters_after_fatha_correction.append(each_letter_object)
         character = remove_diacritics(each_letter_object.letter)
         if (character in letters_of_fatha_correction) and (each_letter_object.location != 'first'):
@@ -267,21 +269,27 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
 
             prev_char_object = __list_of_actual_letters_with_its_location[counter - 1]
             prev_prev_char_object = __list_of_actual_letters_with_its_location[counter - 2]
-
+            if (counter + 1) <= (len(__list_of_actual_letters_with_its_location) - 1):
+                try:
+                    next_char_object = __list_of_actual_letters_with_its_location[counter + 1]
+                except:
+                    x = 1
             prev_char_object.letter = unicodedata.normalize('NFC', prev_char_object.letter)
             prev_prev_char_object.letter = unicodedata.normalize('NFC', prev_prev_char_object.letter)
 
             if letter_caused_fatha_correction == u'ة':
-                corrected_char = correct_teh_marbota_prev_char(prev_char_object.letter, each_letter_object)
+                corrected_char = correct_teh_marbota_prev_char(prev_char_object)
 
             elif letter_caused_fatha_correction == u'ا':
 
-                if prev_char_object.letter == u'ب' and prev_char_object.location == 'first':
+                if remove_diacritics(prev_char_object.letter) == u'ب' \
+                        and prev_char_object.location == 'first' \
+                        and remove_diacritics(next_char_object.letter) == u'ل':
                     corrected_char = correct_alef_prev_char_ba2_case(prev_char_object)
 
                 # يَقُولُوا , وَرُدُّوا
                 # تَحَرَّوْا :special case not handled
-                elif prev_char_object.letter == u'و' \
+                elif remove_diacritics(prev_char_object.letter) == u'و' \
                         and prev_char_object.location == 'middle' \
                         and each_letter_object.location == 'last' \
                         and u'ُ' in prev_prev_char_object.letter:
@@ -289,10 +297,14 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
                     corrected_char = correct_alef_prev_char_waw_alef(prev_char_object)
 
                 # جَمِيعًا
-                elif each_letter_object.letter == u'ا' \
+                elif remove_diacritics(each_letter_object.letter) == u'ا' \
                         and each_letter_object.location == 'last':
 
                     corrected_char = correct_alef_prev_char_normal_case(prev_char_object)
+
+                # مِائَةَ
+                elif remove_diacritics(each_letter_object.letter) == u'ا' and remove_diacritics(next_char_object.letter) == u'ئ':
+                    corrected_char = correct_alef_prev_char_hamza_case(prev_char_object)
 
                 else:
                     corrected_char = correct_alef_prev_char_normal_case(prev_char_object)
@@ -301,7 +313,10 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
 
                 # طُوًى, ضُحًى
                 if prev_prev_char_object.location == 'first' and u'ُ' in prev_prev_char_object.letter and each_letter_object.location == 'last':
-                    corrected_char = correct_alef_maksora_prev_chartanween_case(prev_char_object, each_letter_object)
+                    try:
+                        corrected_char = correct_alef_maksora_prev_char_tanween_case(prev_char_object)
+                    except:
+                        raise "bug found here"
                 # أَبَى
                 else:
                     corrected_char = correct_alef_maksora_prev_char_normal_case(prev_char_object)
@@ -316,12 +331,12 @@ def fatha_correction(__list_of_actual_letters_with_its_location):
 
 def remove_diacritics(character):
     nkfd_form = unicodedata.normalize('NFKD', unicode(character))
-    return u"".join([c for c in nkfd_form if not unicodedata.combining(c)])
+    return u"".join([c for c in nkfd_form if not unicodedata.combining(c) or c == u'ٓ' or c == u'ٔ' ])
 
 
-def correct_teh_marbota_prev_char(prev_char, each_letter_object):
+def correct_teh_marbota_prev_char(prev_char):
 
-    for c in prev_char:
+    for c in prev_char.letter:
         if not unicodedata.combining(c):
             overall = c
             comp = unicodedata.normalize('NFC', c)
@@ -331,8 +346,6 @@ def correct_teh_marbota_prev_char(prev_char, each_letter_object):
             comp = unicodedata.normalize('NFC', overall)
 
         else:
-            if each_letter_object.location != 'middle':
-                raise "Special case not handled in correct_teh_marbota_prev_char"
 
             c = u'َ'
             overall += c
@@ -352,43 +365,6 @@ def correct_alef_prev_char_ba2_case(prev_char_object):
             overall += c
             comp = unicodedata.normalize('NFC', overall)
 
-    # prev_prev has damma
-    '''
-    elif prev_char_undiacritized == u'و' and prev_char.location == 'middle' and each_letter_object.location == 'last' and u'ُ' in prev_prev_char.letter:
-        for c in prev_char.letter:
-            if not unicodedata.combining(c):
-                comp = unicodedata.normalize('NFC', c)
-
-    elif prev_char_undiacritized == u'و' and prev_char.location == 'middle' and each_letter_object.location == 'last':
-        for c in prev_char.letter:
-            if not unicodedata.combining(c):
-                overall = c
-                comp = unicodedata.normalize('NFC', c)
-
-            else:
-                c = u'َ'
-
-                overall += c
-                comp = unicodedata.normalize('NFC', overall)
-
-    else:
-        for c in prev_char.letter:
-            if not unicodedata.combining(c):
-                overall = c
-                comp = unicodedata.normalize('NFC', c)
-
-            elif c == u'َ' or c == u'ّ' or c == u'ً':
-                overall += c
-                comp = unicodedata.normalize('NFC', overall)
-
-            else:
-                if each_letter_object.location == 'middle':
-                    c = u'َ'
-                elif each_letter_object.location == 'last':
-                    c = u'ً'
-                overall += c
-                comp = unicodedata.normalize('NFC', overall)
-'''
     return comp
 
 
@@ -396,6 +372,24 @@ def correct_alef_prev_char_waw_alef(prev_char_object):
     for c in prev_char_object.letter:
         if not unicodedata.combining(c):
             comp = unicodedata.normalize('NFC', c)
+
+    return comp
+
+
+def correct_alef_prev_char_hamza_case(prev_char_object):
+    for c in prev_char_object.letter:
+        if not unicodedata.combining(c):
+            overall = c
+            comp = unicodedata.normalize('NFC', c)
+
+        elif c == u'ّ':
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
+
+        else:
+            c = u'ِ'
+            overall += c
+            comp = unicodedata.normalize('NFC', overall)
 
     return comp
 
@@ -418,39 +412,43 @@ def correct_alef_prev_char_normal_case(prev_char_object):
     return comp
 
 
-def correct_alef_maksora_prev_chartanween_case(prev_char_object):
-    for c in prev_char_object.letter:
-        if not unicodedata.combining(c):
-            overall = c
-            comp = unicodedata.normalize('NFC', c)
+def correct_alef_maksora_prev_char_tanween_case(prev_char_object):
+    try:
+        for c in prev_char_object.letter:
+            if not unicodedata.combining(c):
+                overall = c
+                comp = unicodedata.normalize('NFC', c)
 
-        elif c == u'َ' or c == u'ّ' or c == u'ً':
-            overall += c
-            comp = unicodedata.normalize('NFC', overall)
+            elif c == u'َ' or c == u'ّ' or c == u'ً':
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
 
-        else:
-            c = u'ً'
-            overall += c
-            comp = unicodedata.normalize('NFC', overall)
-
+            else:
+                c = u'ً'
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+    except:
+        raise "bug found in correct_alef_maksora_prev_char_tanween_case"
     return comp
 
 
 def correct_alef_maksora_prev_char_normal_case(prev_char):
-    for c in prev_char:
-        if not unicodedata.combining(c):
-            overall = c
-            comp = unicodedata.normalize('NFC', c)
+    try:
+        for c in prev_char.letter:
+            if not unicodedata.combining(c):
+                overall = c
+                comp = unicodedata.normalize('NFC', c)
 
-        elif c == u'َ' or c == u'ّ' or c == u'ً':
-            overall += c
-            comp = unicodedata.normalize('NFC', overall)
+            elif c == u'َ' or c == u'ّ' or c == u'ً':
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
 
-        else:
-            c = u'َ'
-            overall += c
-            comp = unicodedata.normalize('NFC', overall)
-
+            else:
+                c = u'َ'
+                overall += c
+                comp = unicodedata.normalize('NFC', overall)
+    except:
+        raise "bug found in correct_alef_maksora_prev_char_normal_case"
     return comp
 
 

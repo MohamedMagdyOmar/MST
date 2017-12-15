@@ -3,6 +3,7 @@ import unittest
 import MySQLdb
 import MySQLdb.cursors
 import unicodedata
+from copy import deepcopy
 import DER_Sukun_Fatha_Dictionary_Correction as DERCalculation
 
 
@@ -77,8 +78,14 @@ class MyTestCase1(unittest.TestCase):
 
     def test_feature_one(self):
 
-        DERCalculation.fatha_correction(self.list_of_actual_letters_with_its_location)
-        y = 1
+        self.letters_after_fatha_correction = DERCalculation.fatha_correction(deepcopy(self.list_of_actual_letters_with_its_location))
+        counter = -1
+        for each_corrected_letter, each_input_letter in zip(self.letters_after_fatha_correction, self.list_of_actual_letters_with_its_location):
+            counter = counter + 1
+            try:
+                self.assertEqual(each_corrected_letter.letter, each_input_letter.letter, each_corrected_letter.letter.encode('utf-8') + " != " + each_input_letter.letter.encode('utf-8'))
+            except:
+                x = 1
 
 
 
