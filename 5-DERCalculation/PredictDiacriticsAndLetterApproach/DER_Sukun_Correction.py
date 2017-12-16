@@ -290,7 +290,7 @@ def get_diacritization_error_without_counting_last_letter(actual_letters, expect
             decomposed_expected_letter = decompose_letter_into_chars_and_diacritics(expected_letter.letter)
             if actual_letter.location == expected_letter.location:
 
-                # ignoring undiacritized target character from DER Calculation as per the paper
+                # ignoring undiacritized target character from DER_Testing Calculation as per the paper
                 if len(decomposed_expected_letter) > 1:
                     if actual_letter.letter != expected_letter.letter:
                         error_object.actual_letter = actual_letter.letter
@@ -411,7 +411,7 @@ if __name__ == "__main__":
                                                                chars_count_for_each_word_in_current_sentence)
         # end of get character position
 
-        # DER Calculation
+        # DER_Testing Calculation
         list_of_error = get_diacritization_error(location_of_each_char_for_actual_op,
                                                  expected_letters_after_sukun_correction,
                                                  selected_sentence)
@@ -420,7 +420,7 @@ if __name__ == "__main__":
                                                     location_of_each_char_for_actual_op,
                                                     location_of_each_char_for_expected_op,
                                                     selected_sentence)
-        # End DER Calculation
+        # End DER_Testing Calculation
         excel1 = current_row_excel_1
         current_row_excel_1 = write_data_into_excel_file(list_of_error,
                                                          selected_sentence, diacritization_error_excel_file_path,
