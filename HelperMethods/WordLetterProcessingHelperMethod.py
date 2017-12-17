@@ -90,6 +90,16 @@ def decompose_word_into_letters(word):
     return decomposed_word
 
 
+def decompose_diac_char_into_char_and_diacritics(diac_char):
+
+    decomposed_char = []
+
+    for each_letter in diac_char:
+        decomposed_char.append(each_letter)
+
+    return decomposed_char
+
+
 def normalize(word):
 
     locale.setlocale(locale.LC_ALL, "")
