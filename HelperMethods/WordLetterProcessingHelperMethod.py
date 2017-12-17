@@ -121,3 +121,15 @@ def convert_list_of_words_to_list_of_chars(list_of_words):
     final_list_of_actual_letters.append(comp)
 
     return final_list_of_actual_letters
+
+
+def attach_diacritics_to_chars(un_diacritized_chars, diacritics):
+    list_chars_attached_with_diacritics = []
+
+    if len(un_diacritized_chars) != len(diacritics):
+        raise Exception('attach_diacritics_to_chars')
+
+    for each_char, each_diacritics in zip(un_diacritized_chars, diacritics):
+        list_chars_attached_with_diacritics.append((each_char + each_diacritics))
+
+    return list_chars_attached_with_diacritics
