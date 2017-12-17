@@ -13,35 +13,44 @@ class LetterPosition:
         self.location = ""
 
 
-def get_each_chars_and_its_location_in_this(sentence):
-    chars_in_sentence_with_its_location = []
+def get_location_of_each_char(list_of_chars, chars_count_for_each_word):
+    list_of_chars_with_its_location = []
+    i = 0
 
-    for each_word in sentence:
+    sum = 0
+    for each_number in chars_count_for_each_word:
+        sum += each_number
+
+    if sum != len(list_of_chars):
+        raise ValueError('bug appeared in "get_location_of_each_character_in_current_sentence"')
+
+    for count_of_letters in chars_count_for_each_word:
         letter_position_object = LetterPosition()
-
-        for x in range(0, len(each_word)):
-            if x == 0 and len(each_word) == 1:
-                letter_position_object.letter = each_word[x]
-                letter_position_object.location = 'oneCharWord'
-                chars_in_sentence_with_its_location.append(deepcopy(letter_position_object))
+        for x in range(0, count_of_letters):
+            if count_of_letters == 1:
+                letter_position_object.letter = list_of_chars[i]
+                letter_position_object.location = 'firstOneLetter'
+                list_of_chars_with_its_location.append(deepcopy(letter_position_object))
 
             else:
                 if x == 0:
-                    letter_position_object.letter = each_word[x]
+                    letter_position_object.letter = list_of_chars[i]
                     letter_position_object.location = 'first'
-                    chars_in_sentence_with_its_location.append(deepcopy(letter_position_object))
+                    list_of_chars_with_its_location.append(deepcopy(letter_position_object))
 
-                elif x == (len(each_word) - 1):
-                    letter_position_object.letter = each_word[x]
+                elif x == (count_of_letters - 1):
+                    letter_position_object.letter = list_of_chars[i]
                     letter_position_object.location = 'last'
-                    chars_in_sentence_with_its_location.append(deepcopy(letter_position_object))
+                    list_of_chars_with_its_location.append(deepcopy(letter_position_object))
 
                 else:
-                    letter_position_object.letter = each_word[x]
+                    letter_position_object.letter = list_of_chars[i]
                     letter_position_object.location = 'middle'
-                    chars_in_sentence_with_its_location.append(deepcopy(letter_position_object))
+                    list_of_chars_with_its_location.append(deepcopy(letter_position_object))
 
-    return chars_in_sentence_with_its_location
+            i += 1
+
+    return list_of_chars_with_its_location
 
 
 def remove_diacritics_from_this(character):
@@ -143,3 +152,16 @@ def attach_diacritics_to_chars(un_diacritized_chars, diacritics):
         list_chars_attached_with_diacritics.append((each_char + each_diacritics))
 
     return list_chars_attached_with_diacritics
+
+
+def get_chars_count_for_each_word_in_this(sentence):
+    count = 0
+    chars_count_of_each_word = []
+    for each_word in sentence:
+        for each_char in each_word:
+            if not unicodedata.combining(each_char):
+                count += 1
+        chars_count_of_each_word.append(count)
+        count = 0
+
+    return chars_count_of_each_word

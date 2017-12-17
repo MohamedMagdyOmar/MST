@@ -21,7 +21,7 @@ def get_list_of_sentence_numbers_by(sentence_type):
 
     connect_to_db()
     get_sentence_number_query = "select distinct SentenceNumber from parseddocument where LetterType = " + \
-                                sentence_type + "order by idCharacterNumber asc "
+                                "'" + sentence_type + "'" + " order by idCharacterNumber asc "
 
     cur.execute(get_sentence_number_query)
 
@@ -63,7 +63,7 @@ def get_un_diacritized_chars_by(sentence_number, sentence_type):
 
     connect_to_db()
     get_un_diacritized_chars_query = "select UnDiacritizedCharacter from parseddocument where " \
-                                     "LetterType = " + sentence_type + "and SentenceNumber = " + str(sentence_number)
+                                     "LetterType = " + "'" + sentence_type + "'" + "and SentenceNumber = " + str(sentence_number)
 
     cur.execute(get_un_diacritized_chars_query)
 
@@ -130,3 +130,5 @@ def get_dictionary_all_diacritized_version_of(un_diacritized_word):
     corresponding_diacritized_words = [each_word[0] for each_word in corresponding_diacritized_words]
 
     return corresponding_diacritized_words
+
+
