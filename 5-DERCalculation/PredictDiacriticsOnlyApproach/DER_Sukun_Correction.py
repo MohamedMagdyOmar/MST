@@ -9,7 +9,7 @@ import glob
 import unicodedata
 from xlrd import open_workbook
 from xlutils.copy import copy
-
+from copy import deepcopy
 
 total_error = 0
 total_error_without_last_letter = 0
@@ -142,8 +142,10 @@ def get_actual_diacritics(list_of_distinct_diacritics, neurons_locations_with_hi
     list_of_actual_diacritics_before_sukun_correction = []
     for neuron_location in neurons_locations_with_highest_output:
         # Take care, we make +1 because "neurons_locations_with_highest_output" is zero index
-        list_of_actual_diacritics_before_sukun_correction.append(list_of_distinct_diacritics[neuron_location - 1])
-
+        try:
+            list_of_actual_diacritics_before_sukun_correction.append(list_of_distinct_diacritics[neuron_location - 1])
+        except:
+            x = 1
     return list_of_actual_diacritics_before_sukun_correction
 
 
@@ -227,6 +229,12 @@ def get_location_of_each_character_in_current_sentence(__list_of_actual_letters,
                                                        __chars_count_for_each_word_in_current_sentence):
     list_of_actual_letters_with_its_location = []
     counter = 0
+    total = 0
+    for each_number in __chars_count_for_each_word_in_current_sentence:
+        total += each_number
+
+    if total != len(__list_of_actual_letters):
+        raise "un macth characters count"
 
     for count_of_letters in __chars_count_for_each_word_in_current_sentence:
         letter_position_object = LetterPosition()
