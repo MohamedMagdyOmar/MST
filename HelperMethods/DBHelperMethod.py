@@ -26,7 +26,7 @@ def get_list_of_sentence_numbers_by(sentence_type):
     sentence_numbers = (cur.fetchall())
     sentence_numbers = [each_number[0] for each_number in sentence_numbers]
     sentence_numbers = list(map(int, sentence_numbers))
-    
+
     return sentence_numbers
 
 
@@ -78,6 +78,19 @@ def get_diacritized_chars_by(sentence_number, sentence_type):
                                   "LetterType = " + sentence_type + "and SentenceNumber = " + str(sentence_number)
 
     cur.execute(get_diacritized_chars_query)
+
+    diacritized_chars = cur.fetchall()
+    diacritized_chars = [eachTuple[0] for eachTuple in diacritized_chars]
+
+    return diacritized_chars
+
+
+def get_available_diacritized_chars():
+
+    connect_to_db()
+    get_available_diacritized_chars_query = "select DiacritizedCharacter from diaconehotencoding"
+
+    cur.execute(get_available_diacritized_chars_query)
 
     diacritized_chars = cur.fetchall()
     diacritized_chars = [eachTuple[0] for eachTuple in diacritized_chars]
