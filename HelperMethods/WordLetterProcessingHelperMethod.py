@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import unicodedata
+import locale
 from copy import deepcopy
 
 
@@ -66,3 +67,57 @@ def reform_word_from(list_of_objects_of_chars_and_its_location):
 
     return list_of_words
 
+
+def decompose_word_into_letters(word):
+
+    decomposed_word = []
+    inter_med_list = []
+    found_flag = False
+
+    for each_letter in word:
+        if not unicodedata.combining(each_letter):
+            if found_flag:
+                decomposed_word.append(inter_med_list)
+            inter_med_list = []
+            inter_med_list.append(each_letter)
+            found_flag = True
+
+        elif found_flag:
+            inter_med_list.append(each_letter)
+    # required because last character will not be added above, but here
+        decomposed_word.append(inter_med_list)
+
+    return decomposed_word
+
+
+def normalize(word):
+
+    locale.setlocale(locale.LC_ALL, "")
+    for x in range(0, len(word)):
+        word[x].sort(cmp=locale.strcoll)
+
+    return word
+
+
+def convert_list_of_words_to_list_of_chars(list_of_words):
+
+    found_flag = False
+    overall = ""
+    comp = ""
+    final_list_of_actual_letters = []
+    for each_word in list_of_words:
+        for each_letter in each_word:
+            if not unicodedata.combining(each_letter):
+                if found_flag:
+                    final_list_of_actual_letters.append(comp)
+
+                overall = each_letter
+                found_flag = True
+                comp = unicodedata.normalize('NFC', overall)
+            elif found_flag:
+                overall += each_letter
+                comp = unicodedata.normalize('NFC', overall)
+
+    final_list_of_actual_letters.append(comp)
+
+    return final_list_of_actual_letters

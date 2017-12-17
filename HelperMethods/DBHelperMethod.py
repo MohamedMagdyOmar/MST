@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import unicodedata
 import MySQLdb
 import MySQLdb.cursors
 
@@ -96,3 +98,35 @@ def get_available_diacritized_chars():
     diacritized_chars = [eachTuple[0] for eachTuple in diacritized_chars]
 
     return diacritized_chars
+
+
+def get_un_diacritized_words_from(sentence_number, sentence_type):
+
+    connect_to_db()
+    get_un_diacritized_words_query = "select distinct UndiacritizedWord from parseddocument where " \
+                                     "LetterType = " + sentence_type + "and SentenceNumber = " + str(sentence_number)
+
+    cur.execute(get_un_diacritized_words_query)
+
+    un_diacritized_words = cur.fetchall()
+
+    un_diacritized_words = [eachTuple[0] for eachTuple in un_diacritized_words]
+
+    list_of_un_diacritized_word = []
+    for each_word in un_diacritized_words:
+        nfkd_form = unicodedata.normalize('NFKD', each_word)
+        undiacritized_word = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٓ' or c == u'ٔ' or c == u'ٕ'])
+        list_of_un_diacritized_word.append(undiacritized_word)
+
+    return list_of_un_diacritized_word
+
+
+def get_dictionary_all_diacritized_version_of(un_diacritized_word):
+    selected_sentence_query = "select DiacritizedWord from dictionary where  UnDiacritizedWord = " + "'" \
+                              + un_diacritized_word + "'"
+
+    cur.execute(selected_sentence_query)
+    corresponding_diacritized_words = cur.fetchall()
+    corresponding_diacritized_words = [each_word[0] for each_word in corresponding_diacritized_words]
+
+    return corresponding_diacritized_words
