@@ -29,15 +29,19 @@ if __name__ == "__main__":
 
         selected_sentence = DBHelperMethod.get_sentence_by(sentence_number)
 
+        #excel_helper1 = ExcelHelperMethod.ExcelHelper()
         rnn_output = ExcelHelperMethod.read_rnn_op_csv_file(path + file_name)
         neurons_with_highest_probability = RNNOPProcessingHelperMethod.get_neurons_numbers_with_highest_output_value(rnn_output)
 
-        list_of_available_diac_chars = DBHelperMethod.get_available_diacritized_chars()
-        RNN_Predicted_Diac_Chars = RNNOPProcessingHelperMethod.\
-            deduce_from_rnn_op_predicted_chars(list_of_available_diac_chars, neurons_with_highest_probability)
+        list_of_available_diacritics = DBHelperMethod.get_all_diacritics()
+        RNN_Predicted_diacritics = RNNOPProcessingHelperMethod.\
+            deduce_from_rnn_op_predicted_chars(list_of_available_diacritics, neurons_with_highest_probability)
+
+        IP_Undiacritized_Chars = DBHelperMethod.get_un_diacritized_chars_by(sentence_number, type)
+        RNN_Predicted_chars = WordLetterProcessingHelperMethod.attach_diacritics_to_chars(IP_Undiacritized_Chars, RNN_Predicted_diacritics)
 
         RNN_Predicted_Chars_Count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(selected_sentence)
-        RNN_Predicted_Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(RNN_Predicted_Diac_Chars, RNN_Predicted_Chars_Count)
+        RNN_Predicted_Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(RNN_Predicted_chars, RNN_Predicted_Chars_Count)
 
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
