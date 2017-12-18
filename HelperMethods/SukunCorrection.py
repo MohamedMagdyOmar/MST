@@ -26,7 +26,7 @@ def sukun_correction_for_list_of_words(list_of_words):
                         words_without_sukun.append(unicodedata.normalize('NFC', overall))
             else:
                 overall += spaChar
-                words_without_sukun.append(unicodedata.normalize('NFC', overall))
+        words_without_sukun.append(unicodedata.normalize('NFC', overall))
         overall = ""
 
     return words_without_sukun

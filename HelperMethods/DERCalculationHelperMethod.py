@@ -16,7 +16,7 @@ class ErrorDetails:
         self.word = ""
 
 
-def get_diacritization_error(actual_letters, expected_letters, sentence):
+def get_diacritization_error(rnn_op_chars, expected_letters, sentence):
     list_of_object_error = []
     total_error = 0
     total_chars_including_un_diacritized_target_letter = 0
@@ -24,10 +24,10 @@ def get_diacritization_error(actual_letters, expected_letters, sentence):
     number_of_diacritization_errors = 0
     letter_location = 0
 
-    if len(actual_letters) != len(expected_letters):
+    if len(rnn_op_chars) != len(expected_letters):
         raise ValueError('bug appeared in "get_diacritization_error"')
 
-    for actual_letter, expected_letter in zip(actual_letters, expected_letters):
+    for actual_letter, expected_letter in zip(rnn_op_chars, expected_letters):
 
         error_object = ErrorDetails()
         decomposed_expected_letter = WordLetterProcessingHelperMethod.\
@@ -35,6 +35,7 @@ def get_diacritization_error(actual_letters, expected_letters, sentence):
 
         letter_location += 1
         total_chars_including_un_diacritized_target_letter += 1
+        # if = 1, this means that char is not diacritized, so do not consider it (as per paper)
         if len(decomposed_expected_letter) > 1:
             if actual_letter.letter != expected_letter.letter:
                 error_object.actual_letter = actual_letter

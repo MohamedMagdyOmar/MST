@@ -61,8 +61,14 @@ def get_diac_version_with_smallest_dist(list_of_objects, sentence_number):
         else:
             list_of_actual_words_after_dictionary_correction.append(each_corrected_word)
 
-    return WordLetterProcessingHelperMethod.\
-        convert_list_of_words_to_list_of_chars(list_of_actual_words_after_dictionary_correction)
+    chars_after_dic_correction = WordLetterProcessingHelperMethod.convert_list_of_words_to_list_of_chars(list_of_actual_words_after_dictionary_correction)
+    if len(list_of_objects) != len(chars_after_dic_correction):
+        raise Exception("Error Happened Here")
+
+    for x in range(0, len(list_of_objects)):
+        list_of_objects[x].letter = chars_after_dic_correction[x]
+
+    return list_of_objects
 
 
 def do_we_need_to_search_in_dictionary(dictionary, word):

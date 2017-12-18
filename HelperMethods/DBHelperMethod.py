@@ -77,7 +77,7 @@ def get_diacritized_chars_by(sentence_number, sentence_type):
 
     connect_to_db()
     get_diacritized_chars_query = "select DiacritizedCharacter from parseddocument where " \
-                                  "LetterType = " + sentence_type + "and SentenceNumber = " + str(sentence_number)
+                                  "LetterType = " + "'" + sentence_type + "'" + "and SentenceNumber = " + str(sentence_number)
 
     cur.execute(get_diacritized_chars_query)
 
@@ -103,8 +103,8 @@ def get_available_diacritized_chars():
 def get_un_diacritized_words_from(sentence_number, sentence_type):
 
     connect_to_db()
-    get_un_diacritized_words_query = "select distinct UndiacritizedWord from parseddocument where " \
-                                     "LetterType = " + sentence_type + "and SentenceNumber = " + str(sentence_number)
+    get_un_diacritized_words_query = "select word from listofwordsandsentencesineachdoc " \
+                                     "where SentenceNumber = " + str(sentence_number)
 
     cur.execute(get_un_diacritized_words_query)
 

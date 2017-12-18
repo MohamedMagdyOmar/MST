@@ -94,7 +94,7 @@ def decompose_word_into_letters(word):
         elif found_flag:
             inter_med_list.append(each_letter)
     # required because last character will not be added above, but here
-        decomposed_word.append(inter_med_list)
+    decomposed_word.append(inter_med_list)
 
     return decomposed_word
 

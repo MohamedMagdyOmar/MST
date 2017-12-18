@@ -21,6 +21,7 @@ class DbObject:
     undiacritizedWord = ""
 
     diacritics = "",
+    char_location = "",
     sentenceNumber = 0
 
     def __init__(self):
@@ -32,6 +33,7 @@ class DbObject:
 
         self.diacritics = ""
         self.sentenceNumber = ""
+        self.char_location = ""
 
 
 def read_selected_doc(path_of_selected_file):
@@ -195,13 +197,15 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
 
         loopCount += 1
         spaChar = unicodedata.normalize('NFC', diacritizedWord)
-
+        char_counter = 0
         for c in spaChar:
 
             if not unicodedata.combining(c):
+                char_counter += 1
                 letterFoundFlag = True
                 overall = c
                 comp = unicodedata.normalize('NFC', c)
+
                 newObject = DbObject()
 
                 newObject.diacritizedCharacter = comp
