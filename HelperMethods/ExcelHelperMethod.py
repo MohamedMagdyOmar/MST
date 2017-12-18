@@ -77,3 +77,40 @@ def write_data_into_excel_file(errors, current_sentence, current_row_in_excel_fi
         workbook.close()
 
         return current_row_in_excel_file
+
+
+def write_data_into_excel_file2(errors, current_sentence, current_row_in_excel_file):
+    wb = open_workbook(diacritization_error_without_last_letter_excel_file_path)
+    w = copy(wb)
+    worksheet2 = w.get_sheet(0)
+
+    current_row_in_excel_file += 1
+    column = 0
+
+    for each_object in errors:
+        worksheet2.write(current_row_in_excel_file, column, each_object.actual_letter.letter)
+
+        column = 1
+        worksheet2.write(current_row_in_excel_file, column, each_object.expected_letter.letter)
+
+        column = 2
+        worksheet2.write(current_row_in_excel_file, column, each_object.error_location)
+
+        column = 3
+        worksheet2.write(current_row_in_excel_file, column, each_object.word)
+
+        current_row_in_excel_file += 1
+        column = 0
+
+    all_sentence = ''
+    for each_word in current_sentence:
+        all_sentence += each_word + ' '
+
+    worksheet2.write(current_row_in_excel_file, column, all_sentence)
+
+    current_row_in_excel_file += 1
+
+    w.save(diacritization_error_without_last_letter_excel_file_path)
+    workbook.close()
+
+    return current_row_in_excel_file

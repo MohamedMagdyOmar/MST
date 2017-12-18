@@ -14,6 +14,8 @@ extension = 'csv'
 path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\\'
 current_row_1 = 0
 current_row_2 = 0
+Total_Error = 0
+Total_Error_without_last_char = 0
 
 if __name__ == "__main__":
     type = 'testing'
@@ -63,7 +65,12 @@ if __name__ == "__main__":
         # write error in excel file
         excel_1 = current_row_1
         current_row_1 = ExcelHelperMethod.write_data_into_excel_file(error, selected_sentence, excel_1)
+        Total_Error += len(error)
+        print "Total Error: ", Total_Error
 
-        #excel_helper2 = ExcelHelperMethod.ExcelHelper()
         excel_2 = current_row_2
-        current_row_2 = ExcelHelperMethod.write_data_into_excel_file(error_without_last_letter, selected_sentence, excel_2)
+        current_row_2 = ExcelHelperMethod.write_data_into_excel_file2(error_without_last_letter, selected_sentence,
+                                                                      excel_2)
+        Total_Error_without_last_char += len(error_without_last_letter)
+        print "Total Error without Last Char: ", Total_Error_without_last_char
+        print ""
