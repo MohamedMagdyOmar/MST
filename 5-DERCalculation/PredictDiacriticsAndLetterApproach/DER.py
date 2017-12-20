@@ -43,8 +43,8 @@ if __name__ == "__main__":
 
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
-        RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(RNN_Predicted_Chars_After_Sukun)
-        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(RNN_Predicted_Chars_After_Fatha, sentence_number)
+        RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))
+        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
 
         # Expected OP
         OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)

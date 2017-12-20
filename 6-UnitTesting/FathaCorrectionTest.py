@@ -65,24 +65,24 @@ class MyTestCase1(unittest.TestCase):
     def setUp(self):
 
         connect_to_db()
-        '''
+
         query_1 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
                   "select arabic_letter from arabic_letters_without_diacritics where id = 7) "
 
-        '''
+
         query_2 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
                   "select arabic_letter from arabic_letters_without_diacritics where id = 2) "
-        '''
+
         query_3 = "select distinct word, DiacritizedCharacter from parseddocument where UnDiacritizedCharacter = (" \
                   "select arabic_letter from arabic_letters_without_diacritics where id = 34) "
-        '''
-        '''
+
+
         self.selected_words = get_query_data(query_1)
-        '''
+
         self.selected_words += get_query_data(query_2)
-        '''
+
         self.selected_words += get_query_data(query_3)
-        '''
+        
         for each_word in self.selected_words:
 
             for each_letter in each_word:

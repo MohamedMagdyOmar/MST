@@ -102,6 +102,7 @@ def remove_diacritics(character):
 def correct_teh_marbota_prev_char(prev_char):
     overall = ""
     comp = ""
+    IsCorrected = False
     for c in prev_char.letter:
         if not unicodedata.combining(c):
             overall = c
@@ -110,11 +111,18 @@ def correct_teh_marbota_prev_char(prev_char):
         elif c == u'َ' or c == u'ّ' or c == u'ً':
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
 
         else:
             c = u'َ'
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
+
+    if IsCorrected == False:
+        c = u'َ'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
 
     return comp
 
@@ -122,6 +130,7 @@ def correct_teh_marbota_prev_char(prev_char):
 def correct_alef_prev_char_ba2_maksora(prev_char_object):
     overall = ""
     comp = ""
+    IsCorrected = False
     for c in prev_char_object.letter:
         if not unicodedata.combining(c):
             overall = c
@@ -130,6 +139,12 @@ def correct_alef_prev_char_ba2_maksora(prev_char_object):
             c = u'ِ'
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
+
+    if IsCorrected == False:
+        c = u'ِ'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
 
     return comp
 
@@ -137,6 +152,7 @@ def correct_alef_prev_char_ba2_maksora(prev_char_object):
 def correct_alef_prev_char_mem(prev_char_object):
     overall = ""
     comp = ""
+    IsCorrected = False
     for c in prev_char_object.letter:
         if not unicodedata.combining(c):
             overall = c
@@ -145,13 +161,19 @@ def correct_alef_prev_char_mem(prev_char_object):
             c = u'ِ'
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
 
+    if IsCorrected == False:
+        c = u'ِ'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
     return comp
 
 
 def correct_alef_prev_char_normal_case(prev_char_object):
     overall = ""
     comp = ""
+    IsCorrected = False
     for c in prev_char_object.letter:
         if not unicodedata.combining(c):
             overall = c
@@ -160,11 +182,18 @@ def correct_alef_prev_char_normal_case(prev_char_object):
         elif c == u'َ' or c == u'ّ' or c == u'ً':
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
 
         else:
             c = u'َ'
             overall += c
             comp = unicodedata.normalize('NFC', overall)
+            IsCorrected = True
+
+    if IsCorrected == False:
+        c = u'َ'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
 
     return comp
 
@@ -172,6 +201,7 @@ def correct_alef_prev_char_normal_case(prev_char_object):
 def correct_alef_maksora_prev_char_tanween_case(prev_char_object):
     overall = ""
     comp = ""
+    IsCorrected = False
     try:
         for c in prev_char_object.letter:
             if not unicodedata.combining(c):
@@ -181,19 +211,28 @@ def correct_alef_maksora_prev_char_tanween_case(prev_char_object):
             elif c == u'َ' or c == u'ّ' or c == u'ً':
                 overall += c
                 comp = unicodedata.normalize('NFC', overall)
+                IsCorrected = True
 
             else:
                 c = u'ً'
                 overall += c
                 comp = unicodedata.normalize('NFC', overall)
+                IsCorrected = True
     except:
         raise Exception("bug found in correct_alef_maksora_prev_char_tanween_case")
+
+    if IsCorrected == False:
+        c = u'ً'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
+
     return comp
 
 
 def correct_alef_maksora_prev_char_normal_case(prev_char):
     overall = ""
     comp = ""
+    IsCorrected = False
     try:
         for c in prev_char.letter:
             if not unicodedata.combining(c):
@@ -203,12 +242,19 @@ def correct_alef_maksora_prev_char_normal_case(prev_char):
             elif c == u'َ' or c == u'ّ' or c == u'ً':
                 overall += c
                 comp = unicodedata.normalize('NFC', overall)
+                IsCorrected = True
 
             else:
                 c = u'َ'
                 overall += c
                 comp = unicodedata.normalize('NFC', overall)
+                IsCorrected = True
     except:
         raise Exception("bug found in correct_alef_maksora_prev_char_normal_case")
+
+    if IsCorrected == False:
+        c = u'َ'
+        overall += c
+        comp = unicodedata.normalize('NFC', overall)
 
     return comp

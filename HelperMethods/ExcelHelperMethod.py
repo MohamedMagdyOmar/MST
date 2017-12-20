@@ -3,6 +3,7 @@ import xlsxwriter
 from xlrd import open_workbook
 from xlutils.copy import copy
 
+
 extension = 'csv'
 
 diacritization_error_excel_file_path = \
@@ -114,3 +115,15 @@ def write_data_into_excel_file2(errors, current_sentence, current_row_in_excel_f
     workbook.close()
 
     return current_row_in_excel_file
+
+
+def read_csv_file(csv_complete_path):
+    csv_op = []
+
+    with open(csv_complete_path, 'rb') as csvfile:
+        reader = csv.reader(csvfile, delimiter=';', quotechar='|')
+
+        for row in reader:
+            csv_op.append(row[0])
+
+        return csv_op

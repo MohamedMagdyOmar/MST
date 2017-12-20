@@ -33,7 +33,6 @@ if __name__ == "__main__":
 
         selected_sentence = DBHelperMethod.get_sentence_by(sentence_number)
 
-        #excel_helper1 = ExcelHelperMethod.ExcelHelper()
         rnn_output = ExcelHelperMethod.read_rnn_op_csv_file(path + file_name)
         neurons_with_highest_probability = RNNOPProcessingHelperMethod.get_neurons_numbers_with_highest_output_value(rnn_output)
 
@@ -49,8 +48,8 @@ if __name__ == "__main__":
 
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
-        RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(RNN_Predicted_Chars_After_Sukun)
-        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(RNN_Predicted_Chars_After_Fatha, sentence_number)
+        RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))
+        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
 
         # Expected OP
         OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)
