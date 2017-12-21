@@ -126,8 +126,9 @@ def convert_list_of_words_to_list_of_chars(list_of_words):
     final_list_of_actual_letters = []
     for each_word in list_of_words:
         for each_letter in each_word:
+            x = unicodedata.combining(each_letter)
             if not unicodedata.combining(each_letter):
-                if found_flag:
+                if found_flag and comp != u'﻿':
                     final_list_of_actual_letters.append(comp)
 
                 overall = each_letter
@@ -159,7 +160,7 @@ def get_chars_count_for_each_word_in_this(sentence):
     chars_count_of_each_word = []
     for each_word in sentence:
         for each_char in each_word:
-            if not unicodedata.combining(each_char):
+            if not unicodedata.combining(each_char) and each_char != u'﻿':
                 count += 1
         chars_count_of_each_word.append(count)
         count = 0

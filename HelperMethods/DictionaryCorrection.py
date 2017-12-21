@@ -27,9 +27,8 @@ def get_diac_version_with_smallest_dist(list_of_objects, sentence_number):
 
         if do_we_need_to_search_in_dictionary(dictionary_diacritized_words_after_sukun_correction, each_corrected_word):
 
-            error_count = 0
-
             for each_word in dictionary_diacritized_words_after_sukun_correction:
+                error_count = 0
 
                 decomposed_dic_word = WordLetterProcessingHelperMethod.decompose_word_into_letters(each_word)
                 decomposed_act_word = WordLetterProcessingHelperMethod.decompose_word_into_letters(each_corrected_word)
@@ -55,6 +54,7 @@ def get_diac_version_with_smallest_dist(list_of_objects, sentence_number):
 
                 if error_count < minimum_error:
                     minimum_error = error_count
+
                     selected_dictionary_word = each_word
 
             list_of_actual_words_after_dictionary_correction.append(selected_dictionary_word)

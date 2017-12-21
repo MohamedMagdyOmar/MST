@@ -7,12 +7,13 @@ from xlrd import open_workbook
 from xlutils.copy import copy
 import ExcelHelperMethod
 import WordLetterProcessingHelperMethod
-import SukunCorrection
+import FathaCorrection
+
 extension = 'csv'
 
 # select  distinct word from parseddocument where lettertype='testing' and diacritics = 'ْ'
 path = 'C:\Users\Mohamed Magdy\Desktop\\'
-diacritization_error_excel_file_path = "C:\Users\Mohamed Magdy\Desktop\TestingSukunCorrection.xls "
+diacritization_error_excel_file_path = "C:\Users\Mohamed Magdy\Desktop\esttest.xls "
 
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
@@ -24,22 +25,22 @@ worksheet.write(0, 3, 'actual location')
 workbook.close()
 
 
-class SukunTest(unittest.TestCase):
+class TehMarbotaTest(unittest.TestCase):
 
     def setUp(self):
-        self.file_name = 'sukuntest.csv'
-        self.sukun_words = ExcelHelperMethod.read_csv_file(path + self.file_name)
-        self.chars_count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(deepcopy(self.sukun_words))
-        self.Chars = WordLetterProcessingHelperMethod.convert_list_of_words_to_list_of_chars(deepcopy(self.sukun_words))
+        self.file_name = 'alfmaksora.csv'
+        self.tehmarbota_words = ExcelHelperMethod.read_csv_file(path + self.file_name)
+        self.chars_count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(deepcopy(self.tehmarbota_words))
+        self.Chars = WordLetterProcessingHelperMethod.convert_list_of_words_to_list_of_chars(deepcopy(self.tehmarbota_words))
 
         self.Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(
             self.Chars, self.chars_count)
 
     def test_feature_one(self):
-        self.Chars_After_Sukun = SukunCorrection.sukun_correction(
+        self.Chars_After_tehmarbota_correction = FathaCorrection.fatha_correction(
             deepcopy(self.Chars_And_Its_Location))
 
-        self.write_data_into_excel_file(self.Chars_After_Sukun, self.Chars_And_Its_Location)
+        self.write_data_into_excel_file(self.Chars_After_tehmarbota_correction, self.Chars_And_Its_Location)
 
     def write_data_into_excel_file(self, each_corrected_letter, each_input_letter):
         wb = open_workbook(diacritization_error_excel_file_path)
@@ -51,6 +52,7 @@ class SukunTest(unittest.TestCase):
 
         for corrected, actual in zip(each_corrected_letter, each_input_letter):
             column = 0
+
             worksheet.write(current_row_in_excel_file, column, corrected.letter)
 
             column = 1

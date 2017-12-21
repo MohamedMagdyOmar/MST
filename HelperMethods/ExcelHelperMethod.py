@@ -124,6 +124,6 @@ def read_csv_file(csv_complete_path):
         reader = csv.reader(csvfile, delimiter=';', quotechar='|')
 
         for row in reader:
-            csv_op.append(row[0])
+            csv_op.append(unicode(row[0], "utf-8"))
 
         return csv_op

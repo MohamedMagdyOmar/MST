@@ -82,7 +82,7 @@ class MyTestCase1(unittest.TestCase):
         self.selected_words += get_query_data(query_2)
 
         self.selected_words += get_query_data(query_3)
-        
+
         for each_word in self.selected_words:
 
             for each_letter in each_word:
