@@ -49,7 +49,7 @@ def get_sentence_by(sentence_number):
 def get_all_diacritics():
 
     connect_to_db()
-    get_all_diacritics_query = "select diacritics from distinctdiacritics"
+    get_all_diacritics_query = "select diacritics from arabic_diacritics"
 
     cur.execute(get_all_diacritics_query)
 
