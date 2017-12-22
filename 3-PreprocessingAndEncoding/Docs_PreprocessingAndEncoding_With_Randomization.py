@@ -27,6 +27,7 @@ class DbObject:
     encoded_output_in_hex_format = ""
 
     diacritics = "",
+    location = "",
     sentenceNumber = 0
 
     def __init__(self):
@@ -44,6 +45,8 @@ class DbObject:
 
         self.encoded_output = ""
         self.encoded_output_in_hex_format = ""
+
+        self.location = ""
 
 
 def get_all_files():
@@ -232,6 +235,7 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
     DbList = []
     letterFoundFlag = False
     prevCharWasDiac = False
+
     loopCount = 0
     overall = ""
     diacritics_only_overall = ""
@@ -239,6 +243,7 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
     for eachObject, un_diacritized_word in zip(list_of_extracted_words_and_corresponding_sentence_number, un_diacritized_words):
         diacritizedWord = eachObject[0]
         sentenceNumber = eachObject[1]
+        first_char_flag = True
 
         loopCount += 1
         if eachObject[0] != 'space' and eachObject[0] != 'bos' and eachObject[0] != 'eos':
@@ -261,6 +266,12 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
 
                     newObject.diacritics = ""
                     newObject.sentenceNumber = sentenceNumber
+
+                    if first_char_flag:
+                        newObject.location = "first"
+                        first_char_flag = False
+                    else:
+                        newObject.location = "middle"
 
                     DbList.append(newObject)
 
@@ -303,6 +314,8 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
             newObject.diacritics = ""
             newObject.sentenceNumber = eachObject[1]
             DbList.append(newObject)
+
+        DbList[-1].location = 'last'
 
 
     return DbList
@@ -405,7 +418,8 @@ def push_data_into_db(doc, data_chars, db_sentences, list_of_words_and_correspon
                     "InputSequenceEncodedWordsInHexFormat,"
                     "TargetSequenceEncodedWordsInHexFormat, "
                     "Diacritics, "
-                    "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
+                    "UnDiacritizedWord, "
+                    "location) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s,%s)",
                     (doc,
                      each_letter_object.undiacritizedCharacter,
                      each_letter_object.diacritizedCharacter,
@@ -417,7 +431,8 @@ def push_data_into_db(doc, data_chars, db_sentences, list_of_words_and_correspon
                      each_letter_object.encoded_input_in_hex_format,
                      each_letter_object.encoded_output_in_hex_format,
                      each_letter_object.diacritics,
-                     each_letter_object.undiacritizedWord))
+                     each_letter_object.undiacritizedWord,
+                     each_letter_object.location))
             training_counter -= 1
         else:
             for each_letter_object in each_sent:
@@ -434,7 +449,8 @@ def push_data_into_db(doc, data_chars, db_sentences, list_of_words_and_correspon
                     "InputSequenceEncodedWordsInHexFormat,"
                     "TargetSequenceEncodedWordsInHexFormat, "
                     "Diacritics, "
-                    "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
+                    "UnDiacritizedWord, "
+                    "location) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s,%s)",
                     (doc,
                      each_letter_object.undiacritizedCharacter,
                      each_letter_object.diacritizedCharacter,
@@ -446,7 +462,8 @@ def push_data_into_db(doc, data_chars, db_sentences, list_of_words_and_correspon
                      each_letter_object.encoded_input_in_hex_format,
                      each_letter_object.encoded_output_in_hex_format,
                      each_letter_object.diacritics,
-                     each_letter_object.undiacritizedWord))
+                     each_letter_object.undiacritizedWord,
+                     each_letter_object.location))
 
     for each_word in list_of_words_and_corresponding_sentence_number:
         cur.execute(

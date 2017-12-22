@@ -16,11 +16,12 @@ db = MySQLdb.connect(host="127.0.0.1",  # your host, usually localhost
 
 cur = db.cursor()
 
-sqlQuery = "select arabic_letter from arabic_letters_without_diacritics"
+sqlQuery = "select arabic_letter, location from arabic_letters_without_diacritics"
 cur.execute(sqlQuery)
 listOfUnDiacritizedCharacter = cur.fetchall()
-listOfUnDiacritizedCharacter = list(listOfUnDiacritizedCharacter)
-listOfUnDiacritizedCharacter = [i[0] for i in listOfUnDiacritizedCharacter]
+listOfUnDiacritizedCharacterObject = list(listOfUnDiacritizedCharacter)
+listOfUnDiacritizedCharacter = [i[0] for i in listOfUnDiacritizedCharacterObject]
+listOfUnDiacritizedCharacterLocation = [i[1] for i in listOfUnDiacritizedCharacterObject]
 
 sqlQuery = "select arabic_letter from arabic_letters_with_diacritics"
 cur.execute(sqlQuery)
@@ -65,9 +66,9 @@ print len(one_hot_list__for_diacritized_characters)
 print len(one_hot_list_for_diacritized)
 
 for x in range(0, len(one_hot_list__for_un_diacritized_characters)):
-    cur.execute("insert into UnDiacOneHotEncoding (UnDiacritizedCharacter,UnDiacritizedCharacterOneHotEncoding)"
-                " VALUES (%s,%s)",
-                (listOfUnDiacritizedCharacter[x], UnDiacritizedOneHotInNDimArrayForm[x]))
+    cur.execute("insert into UnDiacOneHotEncoding (UnDiacritizedCharacter,UnDiacritizedCharacterOneHotEncoding, location)"
+                " VALUES (%s,%s,%s)",
+                (listOfUnDiacritizedCharacter[x], UnDiacritizedOneHotInNDimArrayForm[x], listOfUnDiacritizedCharacterLocation[x]))
 
 for x in range(0, len(one_hot_list__for_diacritized_characters)):
     cur.execute("insert into DiacOneHotEncoding (DiacritizedCharacter,DiacritizedCharacterOneHotEncoding)"
