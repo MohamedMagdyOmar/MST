@@ -1,14 +1,21 @@
 -- General Selection
 select * from parseddocument;
 select * from encodedwords;
+select * from listofwordsandsentencesineachdoc;
 select * from undiaconehotencoding;
+select * from diaconehotencoding;
 select * from distinctdiacritics;
 select * from alldiacriticsinalldocuments;
+select * from dictionary;
 select * from arabic_letters_without_diacritics;
 select * from arabic_letters_with_diacritics;
 select * from arabic_diacritics;
-select * from labels;
-select * from dictionary;
+
+
+SELECT m1.*
+FROM parseddocument m1 LEFT JOIN parseddocument m2
+ ON (m1.Word = m2.Word AND m1.idCharacterNumber < m2.idCharacterNumber)
+WHERE m2.idCharacterNumber IS NULL;
 
 
 -- Conditional Selection
@@ -23,7 +30,9 @@ select * from parseddocument where LetterType='testing';
 select  * from parseddocument where Diacritics= 'ٰ';
 select  * from parseddocument where UnDiacritizedCharacter= 'ـ';
 select  * from parseddocument where Diacritics= 'ًً';
+select distinct SentenceNumber from parseddocument where LetterType = 'testing'
 
+select *from parseddocument where location = 'last' and DiacritizedCharacter = 'آ';
 -- shadda error in atb3
 select distinct diacritics from parseddocument where Diacritics = 'ّ';
 
