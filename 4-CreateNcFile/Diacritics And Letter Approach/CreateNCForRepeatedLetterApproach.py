@@ -27,7 +27,7 @@ def get_all_letters_of_corresponding_dataset_type(type_of_dataset):
 
     listOfSelectedLettersAndSentencesQuery = "select UnDiacritizedCharacter, Diacritics, LetterType, " \
                                              "SentenceNumber," \
-                                             " Word, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
+                                             " Word, UnDiacritizedWord, InputSequenceEncodedWords, TargetSequenceEncodedWords," \
                                              " DiacritizedCharacter, location " \
                                              "from ParsedDocument where LetterType=" + "'%s'" % type_of_dataset
 
@@ -105,34 +105,22 @@ def create_netcdf_input():
 
     global purified_netcdf_input
     purified_netcdf_input = []
+    test = []
     # Create Data of Input Variable
     for eachItem in range(0, len(selected_letters_in_this_loop)):
         yourLabel = selected_letters_in_this_loop[eachItem][0]
-        un_diacritized_word = selected_letters_in_this_loop[eachItem][5]
-        location = selected_letters_in_this_loop[eachItem][8]
+        location = selected_letters_in_this_loop[eachItem][9]
+        if location == 'first' or location == 'middle':
+            location = 'normal'
         flag = True
         while flag:
-            if listOfUnDiacritizedCharacter[searchCounter][1] == yourLabel:
+            if listOfUnDiacritizedCharacter[searchCounter][1] == yourLabel and\
+                                listOfUnDiacritizedCharacter[searchCounter][3] == location:
                 flag = False
                 UnDiacritizedCharacterOneHotEncoding = map(int,
                                                            list(str(listOfUnDiacritizedCharacter[searchCounter][2])))
-                try:
-                    if location == 'first':
-                        UnDiacritizedCharacterOneHotEncoding.append(1)
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                    elif location == 'middle':
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                        UnDiacritizedCharacterOneHotEncoding.append(1)
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                    else:
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                        UnDiacritizedCharacterOneHotEncoding.append(0)
-                        UnDiacritizedCharacterOneHotEncoding.append(1)
-                except:
-                    raise Exception("error occurred in this loop")
-
                 searchCounter = 0
+                test.append(np.array(UnDiacritizedCharacterOneHotEncoding))
                 purified_netcdf_input.append(np.array(UnDiacritizedCharacterOneHotEncoding))
             else:
                 searchCounter += 1
@@ -177,7 +165,7 @@ def create_netcdf_target_classes():
     targetClass = []
     beforeWhileLoop = datetime.datetime.now()
     for eachItem in range(0, len(selected_letters_in_this_loop)):
-        yourLabel = selected_letters_in_this_loop[eachItem][7]
+        yourLabel = selected_letters_in_this_loop[eachItem][8]
         OneHotTargetClassNotFound = True
 
         while OneHotTargetClassNotFound:
@@ -291,7 +279,7 @@ def try_using_query(letter):
 
 
 if __name__ == "__main__":
-    availableDataSetTypes = ['training']
+    availableDataSetTypes = ['testing']
     columnNumberOf_SentenceNumber = 3
 
     create_mysql_connection()
