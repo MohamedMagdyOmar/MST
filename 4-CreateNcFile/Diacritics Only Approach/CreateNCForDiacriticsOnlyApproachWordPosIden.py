@@ -117,6 +117,7 @@ def create_netcdf_input():
                     flag = False
                     UnDiacritizedCharacterOneHotEncoding = map(int,
                                                            list(str(listOfUnDiacritizedCharacter[searchCounter][2])))
+                    '''
                     try:
                         if yourLabel == 'space' or yourLabel == 'eos' or yourLabel == 'bos':
                             UnDiacritizedCharacterOneHotEncoding.append(0)
@@ -126,7 +127,7 @@ def create_netcdf_input():
                             UnDiacritizedCharacterOneHotEncoding.append(0)
                     except:
                         x = 1
-
+                    '''
                     searchCounter = 0
                     purified_netcdf_input.append(np.array(UnDiacritizedCharacterOneHotEncoding))
                 else:
@@ -286,7 +287,7 @@ def try_using_query(letter):
 
 
 if __name__ == "__main__":
-    availableDataSetTypes = ['testing']
+    availableDataSetTypes = ['training']
     columnNumberOf_SentenceNumber = 3
 
     create_mysql_connection()
