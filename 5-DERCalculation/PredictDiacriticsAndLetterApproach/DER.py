@@ -44,7 +44,7 @@ if __name__ == "__main__":
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
         RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))
-        #RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
+        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
 
         # Expected OP
         OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)
@@ -57,10 +57,10 @@ if __name__ == "__main__":
 
         # DER Calculation
         error = DERCalculationHelperMethod.get_diacritization_error\
-            (RNN_Predicted_Chars_After_Fatha, OP_Diac_Chars_After_Sukun, selected_sentence)
+            (RNN_Predicted_Chars_After_Dictionary, OP_Diac_Chars_After_Sukun, selected_sentence)
 
         error_without_last_letter = DERCalculationHelperMethod.get_diacritization_error_without_counting_last_letter\
-            (RNN_Predicted_Chars_After_Fatha, OP_Diac_Chars_After_Sukun, selected_sentence)
+            (RNN_Predicted_Chars_After_Dictionary, OP_Diac_Chars_After_Sukun, selected_sentence)
 
         # write error in excel file
         excel_1 = current_row_1
@@ -74,3 +74,4 @@ if __name__ == "__main__":
         Total_Error_without_last_char += len(error_without_last_letter)
         print "Total Error without Last Char: ", Total_Error_without_last_char
         print ""
+    x = 1
