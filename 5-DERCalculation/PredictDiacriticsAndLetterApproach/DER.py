@@ -11,7 +11,7 @@ import glob
 from copy import deepcopy
 # actual = rnnop
 extension = 'csv'
-path = 'D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\\'
+path = 'E:\Repos\\35\\ff\\files\\'
 current_row_1 = 0
 current_row_2 = 0
 Total_Error = 0
@@ -74,3 +74,4 @@ if __name__ == "__main__":
         Total_Error_without_last_char += len(error_without_last_letter)
         print "Total Error without Last Char: ", Total_Error_without_last_char
         print ""
+    x = 1
