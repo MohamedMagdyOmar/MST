@@ -7,10 +7,10 @@ from xlutils.copy import copy
 extension = 'csv'
 
 diacritization_error_excel_file_path = \
-    "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors\Book1.xls "
+    "E:\Repos\\35\\ff\\files\Book1.xls "
 
 diacritization_error_without_last_letter_excel_file_path = \
-    "D:\CurrenntRepo\CurrenntVS\CURRENNT\ArabicDiacritizationExample\Errors\Book2.xls "
+    "E:\Repos\\35\\ff\\files\Book2.xls "
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
