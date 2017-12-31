@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import netCDF4 as netcdf_helpers
 import MySQLdb
 import MySQLdb.cursors
@@ -7,6 +8,7 @@ import datetime
 global punchNumber
 punchNumber = 0
 max_seq_tag_length = 4
+import WordLetterProcessingHelperMethod
 
 
 def create_mysql_connection():
@@ -172,7 +174,8 @@ def create_netcdf_seq_length():
 
 def create_netcdf_target_classes():
     execute_create_netcdf_target_classes_start_time = datetime.datetime.now()
-
+    letter = []
+    diacritics = []
     searchCounter = 0
     targetClass = []
     beforeWhileLoop = datetime.datetime.now()
@@ -180,14 +183,23 @@ def create_netcdf_target_classes():
         yourLabel = selected_letters_in_this_loop[eachItem][7]
         OneHotTargetClassNotFound = True
 
-        while OneHotTargetClassNotFound:
+        decomposed_letter = WordLetterProcessingHelperMethod.decompose_diac_char_into_char_and_diacritics(yourLabel)
+        if len(decomposed_letter) == 2 and decomposed_letter[1] == u'ّ':
+            decomposed_letter[1] = u'َّ'
+            letter.append(decomposed_letter[0])
+            diacritics.append(decomposed_letter[1])
+            yourLabel = WordLetterProcessingHelperMethod.attach_diacritics_to_chars(letter, diacritics)[0]
 
-            if listOfDiacritizedCharacter[searchCounter][1] == yourLabel:
-                OneHotTargetClassNotFound = False
-                targetClass.append(listOfDiacritizedCharacter[searchCounter][0])
-                searchCounter = 0
-            else:
-                searchCounter += 1
+        while OneHotTargetClassNotFound:
+            try:
+                if listOfDiacritizedCharacter[searchCounter][1] == yourLabel:
+                    OneHotTargetClassNotFound = False
+                    targetClass.append(listOfDiacritizedCharacter[searchCounter][0])
+                    searchCounter = 0
+                else:
+                    searchCounter += 1
+            except:
+                x = 1
     afterWhileLoop = datetime.datetime.now()
     print "While Loop takes : ", afterWhileLoop - beforeWhileLoop
 

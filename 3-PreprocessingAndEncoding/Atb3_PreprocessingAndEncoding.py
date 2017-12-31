@@ -3,10 +3,10 @@ import re
 import unicodedata
 import MySQLdb
 import os
+import copy
 
 # 1 for atb3
 
-pathOfDataFiles = "D:\MasterRepo\MSTRepo\PaperCorpus\Doc"
 listOfPunctuationSymbols = [u' .', u'.', u' :', u'«', u'»', u'،', u'؛', u'؟', u'.(', u').', u':(', u'):', u'» .', u'».']
 listOfArabicDiacriticsUnicode = [["064b", "064c", "064d", "064e", "064f", "0650", "0651", "0652", "0670"],
                                  [1, 2, 3, 4, 5, 6, 8, 7, 9]]
@@ -19,9 +19,13 @@ class DbObject:
 
     undiacritizedCharacter = "",
     undiacritizedWord = ""
+    encoded_input = ""
+    encoded_input_in_hex_format = ""
+    encoded_output = ""
+    encoded_output_in_hex_format = ""
 
     diacritics = "",
-    char_location = "",
+    location = "",
     sentenceNumber = 0
 
     def __init__(self):
@@ -33,78 +37,92 @@ class DbObject:
 
         self.diacritics = ""
         self.sentenceNumber = ""
-        self.char_location = ""
+
+        self.encoded_input = ""
+        self.encoded_input_in_hex_format = ""
+
+        self.encoded_output = ""
+        self.encoded_output_in_hex_format = ""
+
+        self.location = ""
 
 
-def read_selected_doc(path_of_selected_file):
-    f = open(path_of_selected_file, 'r')
+def get_all_files():
+    list_of_files_paths = []
+    list_of_doc_name = []
+    for file_name in os.listdir("D:\MasterRepo\MSTRepo\PaperCorpus\Doc"):
+        if file_name.endswith(".txt"):
+            list_of_files_paths.append(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", file_name))
+            list_of_doc_name.append(file_name)
+
+    return list_of_files_paths, list_of_doc_name
+
+
+def read_doc(each_doc, list_of_paths, list_of_docs):
+
+    f = open(list_of_paths[each_doc], 'r')
+    document_name = list_of_docs[each_doc]
     data = f.readlines()
     f.close()
-    return data
+
+    return document_name, data
 
 
-def clean_word_from_strange_characters(word):
+def extract_and_clean_words_from_doc(data):
+        list_of_words = []
+        splitted_data = data.split()
+        for word in splitted_data:
 
-    word = word.decode('utf-8', 'ignore')
-    word = re.sub(u'[-;}()/]', '', word)
-    word = re.sub(u'[-;}()0123456789/]', '', word)
-    word = re.sub(u'["{"]', '', word)
-    word = re.sub(u'[:]', ' :', word)
-    word = re.sub(u'[_]', '', word)
-    word = re.sub(u'[`]', '', word)
-    word = re.sub(u'[[]', '', word)
-    word = re.sub(u'[]]', '', word)
-    word = re.sub(u'[L]', '', word)
-    word = re.sub(u'[+]', '', word)
-    word = re.sub(u'[!]', '', word)
-    word = re.sub(u'[\']', '', word)
-    word = re.sub(u'[...]', '', word)
-    word = re.sub(u'[*]', '', word)
-    word = re.sub(u'[&]', '', word)
-    word = re.sub(u'[_]', '', word)
-    word = re.sub(u'[q]', '', word)
-    word = re.sub(u'[u]', '', word)
-    word = re.sub(u'[o]', '', word)
-    word = re.sub(u'[t]', '', word)
-    word = re.sub(u'ٰ', '', word)
-    word = re.sub(u'ـ', '', word)
-
-    return word
-
-
-def extract_and_clean_words_from_strange_character_from_doc_and_return_list_of_purified_words(data_file):
-    listOfWords = []
-    for eachSentence in data_file:
-        wordsInSentence = eachSentence.split()
-        for word in wordsInSentence:
-            word = clean_word_from_strange_characters(word)
-
+            word = word.decode('utf-8', 'ignore')
+            word = re.sub(u'[-;}()/]', '', word)
+            word = re.sub(u'[-;}()0123456789/]', '', word)
+            word = re.sub(u'["{"]', '', word)
+            word = re.sub(u'[:]', ' :', word)
+            word = re.sub(u'[_]', '', word)
+            word = re.sub(u'[`]', '', word)
+            word = re.sub(u'[[]', '', word)
+            word = re.sub(u'[]]', '', word)
+            word = re.sub(u'[L]', '', word)
+            word = re.sub(u'[+]', '', word)
+            word = re.sub(u'[!]', '', word)
+            word = re.sub(u'[\']', '', word)
+            word = re.sub(u'[...]', '', word)
+            word = re.sub(u'[*]', '', word)
+            word = re.sub(u'[&]', '', word)
+            word = re.sub(u'[_]', '', word)
+            word = re.sub(u'[q]', '', word)
+            word = re.sub(u'[u]', '', word)
+            word = re.sub(u'[o]', '', word)
+            word = re.sub(u'[t]', '', word)
+            word = re.sub(u'ٰ', '', word)
+            word = re.sub(u'ـ', '', word)
             if not (word == u''):
-                listOfWords.append(word)
+                list_of_words.append(word)
 
-    return listOfWords
+        return list_of_words
 
 
-def bind_words_with_sentence_number_in_this_doc(doc):
+def bind_words_with_sentence_number_in_this_doc(raw_data):
+    global wordCount
+    global sentenceCount
+    list_of_words_in_doc_and_corresponding_sentence_number = []
 
-    listOfWordsInDocAndCorrespondingSentenceNumber = []
+    sentenceCount = 0
+    wordCount = 0
+    for eachVersus in raw_data:
+        sentenceCount += 1
+        each_word_in_versus = extract_and_clean_words_from_doc((eachVersus))
+        list_of_words_in_doc_and_corresponding_sentence_number.append(["bos", sentenceCount])
+        for eachWord in each_word_in_versus:
+            #eachWord = eachWord.decode('utf-8', 'ignore')
+            wordCount += 1
+            list_of_words_in_doc_and_corresponding_sentence_number.append([eachWord, sentenceCount])
+            list_of_words_in_doc_and_corresponding_sentence_number.append(["space", sentenceCount])
 
-    for eachSentence in doc:
-        global sentenceCount
-        # count sentence only if there is words in the sentence
-        sentenceCounterFlag = True
+        list_of_words_in_doc_and_corresponding_sentence_number.pop()
+        list_of_words_in_doc_and_corresponding_sentence_number.append(["eos", sentenceCount])
 
-        allWordsInSelectedSentence = eachSentence.split()
-
-        for eachWord in allWordsInSelectedSentence:
-            eachWord = clean_word_from_strange_characters(eachWord)
-            if not (eachWord == u''):
-                if sentenceCounterFlag:
-                    sentenceCounterFlag = False
-                    sentenceCount += 1
-                listOfWordsInDocAndCorrespondingSentenceNumber.append([eachWord, str(sentenceCount)])
-
-    return listOfWordsInDocAndCorrespondingSentenceNumber
+    return list_of_words_in_doc_and_corresponding_sentence_number
 
 
 def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words_without_numbers):
@@ -112,72 +130,80 @@ def get_list_of_undiacritized_word_from_diacritized_word(list_of_extracted_words
     listOfUnDiacritizedWord = []
 
     for word in list_of_extracted_words_without_numbers:
-        if not word in listOfPunctuationSymbols:
 
-            if word.find('.') != -1:
-                word = re.sub('[.]', '', word)
+        if word[0] != "space" and word[0] != "bos" and word[0] != "eos":
+            if not word[0] in listOfPunctuationSymbols:
 
-            # word = word.decode('utf-8', 'ignore')
-            nfkd_form = unicodedata.normalize('NFKD', word)
+                if word[0].find(u'.') != -1:
+                    word[0] = re.sub(u'[.]', '', word[0])
 
-            unDiacritizedWord = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
-            listOfUnDiacritizedWord.append(unDiacritizedWord)
+                #word[0] = word[0].decode('utf-8', 'ignore')
+                nfkd_form = unicodedata.normalize('NFKD', word[0])
+
+                word[0] = u"".join([c for c in nfkd_form if not unicodedata.combining(c) or c == u'ٔ' or c == u'ٕ'])
+                listOfUnDiacritizedWord.append(word)
+        else:
+            listOfUnDiacritizedWord.append(word)
 
     return listOfUnDiacritizedWord
 
 
 def character_encoder(list_of_extracted_words_without_numbers):
-
     listOfEncodedCharacters = []
     listOfEncodedCharactersInHexFormat = []
 
     for word in list_of_extracted_words_without_numbers:
-        if not word in listOfPunctuationSymbols:
-            if word.find(u'.') != -1:
-                word = re.sub(u'[.]', '', word)
 
-            letterFoundFlag = False
-            prevCharWasDiac = False
+        if word[0] != "space" and word[0] != "eos" and word[0] != "bos":
+            if not word[0] in listOfPunctuationSymbols:
+                if word[0].find(u'.') != -1:
+                    word[0] = re.sub(u'[.]', '', word[0])
 
-            for c in word:
-                if not unicodedata.combining(c):  # letter
-                    letterFoundFlag = True
-                    hexAsString = hex(ord(c))[2:].zfill(4)
-                    integer = int(hexAsString, 16)
-                    maskedInt = integer & 255
-                    shiftedInt = maskedInt << 4
-                    listOfEncodedCharactersInHexFormat.append(hex(shiftedInt))
-                    listOfEncodedCharacters.append(bin(shiftedInt)[2:].zfill(16))
+                letterFoundFlag = False
+                prevCharWasDiac = False
 
-                elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':  # first diacritization
-                    prevCharWasDiac = True
-                    letterFoundFlag = False
+                for c in word[0]:
+                    if not unicodedata.combining(c):  # letter
+                        letterFoundFlag = True
+                        hexAsString = hex(ord(c))[2:].zfill(4)
+                        integer = int(hexAsString, 16)
+                        maskedInt = integer & 255
+                        shiftedInt = maskedInt << 4
+                        listOfEncodedCharactersInHexFormat.append(hex(shiftedInt))
+                        listOfEncodedCharacters.append(bin(shiftedInt)[2:].zfill(16))
 
-                    hexDiacAsString = hex(ord(c))[2:].zfill(4)
+                    elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':  # first diacritization
+                        prevCharWasDiac = True
+                        letterFoundFlag = False
 
-                    integerDiac = listOfArabicDiacriticsUnicode[1][
-                        listOfArabicDiacriticsUnicode[0].index(hexDiacAsString)]
-                    integerDiacAfterORing = shiftedInt | integerDiac
-                    listOfEncodedCharacters.pop()
-                    listOfEncodedCharacters.append(bin(integerDiacAfterORing)[2:].zfill(16))
+                        hexDiacAsString = hex(ord(c))[2:].zfill(4)
 
-                    listOfEncodedCharactersInHexFormat.pop()
-                    listOfEncodedCharactersInHexFormat.append(hex(integerDiacAfterORing))
+                        integerDiac = listOfArabicDiacriticsUnicode[1][
+                            listOfArabicDiacriticsUnicode[0].index(hexDiacAsString)]
+                        integerDiacAfterORing = shiftedInt | integerDiac
+                        listOfEncodedCharacters.pop()
+                        listOfEncodedCharacters.append(bin(integerDiacAfterORing)[2:].zfill(16))
 
-                elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
+                        listOfEncodedCharactersInHexFormat.pop()
+                        listOfEncodedCharactersInHexFormat.append(hex(integerDiacAfterORing))
 
-                    letterFoundFlag = False
-                    prevCharWasDiac = False
+                    elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
 
-                    hexSecDiacAsString = hex(ord(c))[2:].zfill(4)
+                        letterFoundFlag = False
+                        prevCharWasDiac = False
 
-                    integerSecDiac = listOfArabicDiacriticsUnicode[1][
-                        listOfArabicDiacriticsUnicode[0].index(hexSecDiacAsString)]
-                    integerSecDiacAfterORing = integerDiacAfterORing | integerSecDiac
-                    listOfEncodedCharacters.pop()
-                    listOfEncodedCharacters.append(bin(integerSecDiacAfterORing)[2:].zfill(16))
-                    listOfEncodedCharactersInHexFormat.pop()
-                    listOfEncodedCharactersInHexFormat.append(hex(integerSecDiacAfterORing))
+                        hexSecDiacAsString = hex(ord(c))[2:].zfill(4)
+
+                        integerSecDiac = listOfArabicDiacriticsUnicode[1][
+                            listOfArabicDiacriticsUnicode[0].index(hexSecDiacAsString)]
+                        integerSecDiacAfterORing = integerDiacAfterORing | integerSecDiac
+                        listOfEncodedCharacters.pop()
+                        listOfEncodedCharacters.append(bin(integerSecDiacAfterORing)[2:].zfill(16))
+                        listOfEncodedCharactersInHexFormat.pop()
+                        listOfEncodedCharactersInHexFormat.append(hex(integerSecDiacAfterORing))
+        else:
+            listOfEncodedCharacters.append(word[0])
+            listOfEncodedCharactersInHexFormat.append(word[0])
 
     return listOfEncodedCharacters, listOfEncodedCharactersInHexFormat
 
@@ -187,6 +213,7 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
     DbList = []
     letterFoundFlag = False
     prevCharWasDiac = False
+
     loopCount = 0
     overall = ""
     diacritics_only_overall = ""
@@ -194,60 +221,92 @@ def extract_each_character_from_word_with_its_diacritization(list_of_extracted_w
     for eachObject, un_diacritized_word in zip(list_of_extracted_words_and_corresponding_sentence_number, un_diacritized_words):
         diacritizedWord = eachObject[0]
         sentenceNumber = eachObject[1]
+        first_char_flag = True
 
         loopCount += 1
-        spaChar = unicodedata.normalize('NFC', diacritizedWord)
-        char_counter = 0
-        for c in spaChar:
+        if eachObject[0] != 'space' and eachObject[0] != 'bos' and eachObject[0] != 'eos':
 
-            if not unicodedata.combining(c):
-                char_counter += 1
-                letterFoundFlag = True
-                overall = c
-                comp = unicodedata.normalize('NFC', c)
+            spaChar = unicodedata.normalize('NFC', eachObject[0])
 
-                newObject = DbObject()
+            for c in spaChar:
 
-                newObject.diacritizedCharacter = comp
-                newObject.diacritizedWord = diacritizedWord
+                if not unicodedata.combining(c):
+                    letterFoundFlag = True
+                    overall = c
+                    comp = unicodedata.normalize('NFC', c)
+                    newObject = DbObject()
 
-                newObject.undiacritizedCharacter = c
-                newObject.undiacritizedWord = un_diacritized_word
+                    newObject.diacritizedCharacter = comp
+                    newObject.diacritizedWord = diacritizedWord
 
-                newObject.diacritics = ""
-                newObject.sentenceNumber = sentenceNumber
+                    newObject.undiacritizedCharacter = c
+                    newObject.undiacritizedWord = un_diacritized_word[0]
 
-                DbList.append(newObject)
+                    newObject.diacritics = ""
+                    newObject.sentenceNumber = sentenceNumber
 
-            elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':
+                    if first_char_flag:
+                        newObject.location = "first"
+                        first_char_flag = False
+                    else:
+                        newObject.location = "middle"
 
-                prevCharWasDiac = True
-                letterFoundFlag = False
-                overall += c
-                diacritics_only_overall = c
+                    DbList.append(newObject)
 
-                newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
-                newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
-                newObject.sentenceNumber = sentenceNumber
+                elif letterFoundFlag and c != u'ٔ' and c != u'ٕ':
 
-                DbList.pop()
-                DbList.append(newObject)
+                    prevCharWasDiac = True
+                    letterFoundFlag = False
+                    overall += c
+                    diacritics_only_overall = c
 
-            elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
+                    newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
+                    newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.sentenceNumber = sentenceNumber
 
-                letterFoundFlag = False
-                prevCharWasDiac = False
-                overall += c
-                diacritics_only_overall += c
+                    DbList.pop()
+                    DbList.append(newObject)
 
-                newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
-                newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
-                newObject.sentenceNumber = sentenceNumber
+                elif prevCharWasDiac and c != u'ٔ' and c != u'ٕ':  # second diacritization
 
-                DbList.pop()
-                DbList.append(newObject)
+                    letterFoundFlag = False
+                    prevCharWasDiac = False
+                    overall += c
+                    diacritics_only_overall += c
+
+                    newObject.diacritizedCharacter = unicodedata.normalize('NFC', overall)
+                    newObject.diacritics = unicodedata.normalize('NFC', diacritics_only_overall)
+                    newObject.sentenceNumber = sentenceNumber
+
+                    DbList.pop()
+                    DbList.append(newObject)
+        else:
+            newObject = DbObject()
+
+            newObject.diacritizedCharacter = eachObject[0]
+            newObject.diacritizedWord = eachObject[0]
+
+            newObject.undiacritizedCharacter = eachObject[0]
+            newObject.undiacritizedWord = eachObject[0]
+
+            newObject.diacritics = ""
+            newObject.sentenceNumber = eachObject[1]
+            DbList.append(newObject)
+
+        DbList[-1].location = 'last'
 
     return DbList
+
+
+def collect_all_data_in_one_list(db_list, encoded_input, encoded_input_in_hex, encoded_output, encoded_output_in_hex):
+
+    for each_object, each_encoded_input, each_encoded_input_in_hex, each_encoded_output, each_encoded_output_in_hex in zip(db_list, encoded_input, encoded_input_in_hex, encoded_output, encoded_output_in_hex):
+        each_object.encoded_input = each_encoded_input
+        each_object.encoded_input_in_hex_format = each_encoded_input_in_hex
+        each_object.encoded_output = each_encoded_output
+        each_object.encoded_output_in_hex_format = each_encoded_output_in_hex
+
+    return db_list
 
 
 def connect_to_db():
@@ -265,9 +324,12 @@ def connect_to_db():
     cur = db.cursor()
 
 
-def push_data_into_db(db_list_of_object, encoded_input, encoded_input_in_hex_format, encoded_target, encoded_target_in_hex_format, list_of_words_in_this_doc_and_corresponding_sentence_number):
+def push_data_into_db(doc, data_chars, list_of_words_and_corresponding_sentence_number):
 
-    for x in range(0, len(db_list_of_object)):
+
+    # Part A : filling "Encoded Words" Table
+    '''
+    for x in range(0, len(data_chars)):
 
         cur.execute(
             "INSERT INTO EncodedWords("
@@ -280,77 +342,73 @@ def push_data_into_db(db_list_of_object, encoded_input, encoded_input_in_hex_for
             "Diacritics) "
             "VALUES ( "
             "%s,%s,%s,%s,%s,%s,%s)",
-            (encoded_input[x],
-             encoded_target[x],
-             db_list_of_object[x].diacritizedCharacter,
-             db_list_of_object[x].undiacritizedCharacter,
-             encoded_input_in_hex_format[x],
-             encoded_target_in_hex_format[x],
-             db_list_of_object[x].diacritics))
+            (data_chars[x].encoded_input,
+             data_chars[x].encoded_output,
+             data_chars[x].diacritizedCharacter,
+             data_chars[x].undiacritizedCharacter,
+             data_chars[x].encoded_input_in_hex_format,
+             data_chars[x].encoded_output_in_hex_format,
+             data_chars[x].diacritics))
+    '''
+    for each_letter_object in data_chars:
+                cur.execute(
+                    "INSERT INTO ParsedDocument("
+                    "DocName, "
+                    "UnDiacritizedCharacter,"
+                    "DiacritizedCharacter,"
+                    "LetterType,"
+                    "SentenceNumber, "
+                    "Word, "
+                    "InputSequenceEncodedWords,"
+                    "TargetSequenceEncodedWords, "
+                    "InputSequenceEncodedWordsInHexFormat,"
+                    "TargetSequenceEncodedWordsInHexFormat, "
+                    "Diacritics, "
+                    "UnDiacritizedWord, "
+                    "location) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s,%s)",
+                    (doc,
+                     each_letter_object.undiacritizedCharacter,
+                     each_letter_object.diacritizedCharacter,
+                     'testing',
+                     each_letter_object.sentenceNumber,
+                     each_letter_object.diacritizedWord,
+                     each_letter_object.encoded_input,
+                     each_letter_object.encoded_output,
+                     each_letter_object.encoded_input_in_hex_format,
+                     each_letter_object.encoded_output_in_hex_format,
+                     each_letter_object.diacritics,
+                     each_letter_object.undiacritizedWord,
+                     each_letter_object.location))
 
-        cur.execute(
-            "INSERT INTO ParsedDocument("
-            "DocName, "
-            "UnDiacritizedCharacter,"
-            "DiacritizedCharacter,"
-            "LetterType,"
-            "SentenceNumber, "
-            "Word, "
-            "InputSequenceEncodedWords,"
-            "TargetSequenceEncodedWords, "
-            "InputSequenceEncodedWordsInHexFormat,"
-            "TargetSequenceEncodedWordsInHexFormat, "
-            "Diacritics, "
-            "UnDiacritizedWord) VALUES (%s,%s,%s,%s,%s,%s,%s,""%s,%s,%s,%s,%s)",
-            (docName,
-             db_list_of_object[x].undiacritizedCharacter,
-             db_list_of_object[x].diacritizedCharacter,
-             'testing',
-             db_list_of_object[x].sentenceNumber,
-             db_list_of_object[x].diacritizedWord,
-             encoded_input[x],
-             encoded_target[x],
-             encoded_input_in_hex_format[x],
-             encoded_target_in_hex_format[x],
-             db_list_of_object[x].diacritics,
-             db_list_of_object[x].undiacritizedWord))
-
-    for x in range(0, len(list_of_words_in_this_doc_and_corresponding_sentence_number)):
+    for each_word in list_of_words_and_corresponding_sentence_number:
         cur.execute(
             "INSERT INTO ListOfWordsAndSentencesInEachDoc(word,SentenceNumber,DocName) VALUES (%s,%s,%s)",
-            (list_of_words_in_this_doc_and_corresponding_sentence_number[x][0],
-             list_of_words_in_this_doc_and_corresponding_sentence_number[x][1],
-             docName))
+            (each_word[0], each_word[1], doc))
 
     db.commit()
     db.close()
 
-
 if __name__ == "__main__":
 
-    for each_file in os.listdir(pathOfDataFiles):
-        pathOfSelectedFile = ""
-        docName = each_file
+    listOfFilesPaths, ListOfDocs = get_all_files()
 
-        if each_file.endswith(".txt"):
-            pathOfSelectedFile = (os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", each_file))
-            print(os.path.join("D:\MasterRepo\MSTRepo\PaperCorpus\Doc", each_file))
-
-        dataInThisDoc = read_selected_doc(pathOfSelectedFile)
-
-        listOfWordsInThisDocAndCorrespondingSentenceNumber = bind_words_with_sentence_number_in_this_doc(dataInThisDoc)
-
-        listOfExtractedWordsFromDoc = extract_and_clean_words_from_strange_character_from_doc_and_return_list_of_purified_words(dataInThisDoc)
-
-        listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(listOfExtractedWordsFromDoc)
+    for eachDoc in range(0, len(listOfFilesPaths)):
+        doc_name = listOfFilesPaths[eachDoc]
+        selected_doc, raw_data = read_doc(eachDoc, listOfFilesPaths, ListOfDocs)
+        # cleaned_data = extract_and_clean_words_from_doc(raw_data)
+        listOfWordsAndCorrespondingSentenceNumber = bind_words_with_sentence_number_in_this_doc(raw_data)
+        listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(
+            copy.deepcopy(listOfWordsAndCorrespondingSentenceNumber))
 
         encodedInput, encodedInputInHexFormat = character_encoder(listOfUndiacritizedWords)
+        encodedTarget, encodedTargetInHexFormat = character_encoder(listOfWordsAndCorrespondingSentenceNumber)
+        dbList = extract_each_character_from_word_with_its_diacritization(
+            listOfWordsAndCorrespondingSentenceNumber, listOfUndiacritizedWords)
 
-        encodedTarget, encodedTargetInHexFormat = character_encoder(listOfExtractedWordsFromDoc)
-
-        dbList = extract_each_character_from_word_with_its_diacritization(listOfWordsInThisDocAndCorrespondingSentenceNumber, listOfUndiacritizedWords)
-
+        data = collect_all_data_in_one_list(dbList, encodedInput, encodedInputInHexFormat, encodedTarget,
+                                            encodedTargetInHexFormat)
         connect_to_db()
 
-        push_data_into_db(dbList, encodedInput, encodedInputInHexFormat, encodedTarget, encodedTargetInHexFormat, listOfWordsInThisDocAndCorrespondingSentenceNumber)
+        push_data_into_db(selected_doc, data, listOfWordsAndCorrespondingSentenceNumber)
 
+        print doc_name

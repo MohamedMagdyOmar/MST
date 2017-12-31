@@ -16,7 +16,7 @@ UPDATE distinctdiacritics SET encoding = REPLACE(encoding, ' ', '');
 UPDATE distinctdiacritics SET encoding = REPLACE(encoding, '[', '');
 UPDATE distinctdiacritics SET encoding = REPLACE(encoding, ']', '');
 
-
+SET SQL_SAFE_UPDATES = 0;
 delete from parseddocument where UnDiacritizedCharacter = 'bos' or UnDiacritizedCharacter = 'space' or UnDiacritizedCharacter = 'eos';
 delete from encodedwords where UnDiacritizedCharacter = 'bos' or UnDiacritizedCharacter = 'space' or UnDiacritizedCharacter = 'eos';
 delete from ListOfWordsAndSentencesInEachDoc where word = 'bos' or word = 'space' or word = 'eos';
@@ -86,4 +86,8 @@ insert into dictionary (DiacritizedWord,UnDiacritizedWord)
 (select word, UnDiacritizedWord from parseddocument where   LetterType='training' group by word order by UnDiacritizedWord asc);
 
 -- presence of shadda only mistake
-select  distinct idCharacterNumber, Diacritics from parseddocument where lettertype='testing' and diacritics = 'ّ'
+select  distinct idCharacterNumber, Diacritics from parseddocument where diacritics = 'ّ';
+
+UPDATE parseddocument
+SET Diacritics = 'َّ' 
+WHERE Diacritics = 'ّ' 

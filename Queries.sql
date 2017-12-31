@@ -11,6 +11,7 @@ select * from arabic_letters_without_diacritics;
 select * from arabic_letters_with_diacritics;
 select * from arabic_diacritics;
 
+select * from parseddocument where Diacritics = 'َّ' and location = 'middle'
 
 SELECT m1.*
 FROM parseddocument m1 LEFT JOIN parseddocument m2
@@ -21,7 +22,7 @@ WHERE m2.idCharacterNumber IS NULL;
 -- Conditional Selection
 
 -- Parsed Table
-select * from parseddocument where   LetterType='training' ;
+select * from parseddocument where   LetterType='training' and SentenceNumber=3311 ;
 select * from parseddocument where   LetterType='validation';
 select  * from parseddocument where LetterType='testing';
 select * from parseddocument where LetterType='testing';
@@ -34,7 +35,7 @@ select distinct SentenceNumber from parseddocument where LetterType = 'testing'
 
 select *from parseddocument where location = 'last' and DiacritizedCharacter = 'آ';
 -- shadda error in atb3
-select distinct diacritics from parseddocument where Diacritics = 'ّ';
+select * from parseddocument where Diacritics = 'ّ';
 
 -- fatha correction words and letters in parsed table
 select distinct word from parseddocument where UnDiacritizedCharacter = (select arabic_letter from arabic_letters_without_diacritics where id = 7);
@@ -65,7 +66,7 @@ select * from dictionary where DiacritizedWord ='اهْتَدَوْا';
 select * from dictionary where DiacritizedWord ='تَحَرَّوْا';
 select * from dictionary where DiacritizedWord ='كُفُوًا';
 select * from dictionary where DiacritizedWord ='هُزُوًا';
-
+select * from dictionary where unDiacritizedWord ='ربه';
 
 CREATE TABLE new_foo LIKE parseddocument;
 RENAME TABLE parseddocument TO old_foo, new_foo TO parseddocument;
