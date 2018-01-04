@@ -23,9 +23,9 @@ if __name__ == "__main__":
     os.chdir(path)
     result = [i for i in glob.glob('*.{}'.format(extension))]
     current_sentence_counter = 0
-
-   # if len(list_of_sentence_numbers) != len(result):
-   #     raise Exception('Mismatch In Number Of Sentences')
+    counter = 0
+    if len(list_of_sentence_numbers) != len(result):
+        raise Exception('Mismatch In Number Of Sentences')
 
     for file_name, sentence_number in zip(result, list_of_sentence_numbers):
 
@@ -37,14 +37,19 @@ if __name__ == "__main__":
         list_of_available_diac_chars = DBHelperMethod.get_available_diacritized_chars()
         RNN_Predicted_Diac_Chars = RNNOPProcessingHelperMethod.\
             deduce_from_rnn_op_predicted_chars(list_of_available_diac_chars, neurons_with_highest_probability)
+        # Expected OP
+        OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)
 
+        RNN_Predicted_Diac_Chars = WordLetterProcessingHelperMethod.check_target_and_output_letters_are_same(deepcopy(RNN_Predicted_Diac_Chars), OP_Diac_Chars)
+        if sentence_number == 45:
+            x = 1
         RNN_Predicted_Chars_Count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(selected_sentence)
         RNN_Predicted_Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(RNN_Predicted_Diac_Chars, RNN_Predicted_Chars_Count)
 
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
         RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))
-        #RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
+        RNN_Predicted_Chars_After_Dictionary = DictionaryCorrection.get_diac_version_with_smallest_dist(deepcopy(RNN_Predicted_Chars_After_Fatha), sentence_number)
 
         # Expected OP
         OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)
@@ -57,10 +62,10 @@ if __name__ == "__main__":
 
         # DER Calculation
         error = DERCalculationHelperMethod.get_diacritization_error\
-            (RNN_Predicted_Chars_After_Fatha, OP_Diac_Chars_After_Sukun, selected_sentence)
+            (RNN_Predicted_Chars_After_Dictionary, OP_Diac_Chars_After_Sukun, selected_sentence)
 
         error_without_last_letter = DERCalculationHelperMethod.get_diacritization_error_without_counting_last_letter\
-            (RNN_Predicted_Chars_After_Fatha, OP_Diac_Chars_After_Sukun, selected_sentence)
+            (RNN_Predicted_Chars_After_Dictionary, OP_Diac_Chars_After_Sukun, selected_sentence)
 
         # write error in excel file
         excel_1 = current_row_1
@@ -73,5 +78,6 @@ if __name__ == "__main__":
                                                                       excel_2)
         Total_Error_without_last_char += len(error_without_last_letter)
         print "Total Error without Last Char: ", Total_Error_without_last_char
-        print ""
+        counter += 1
+        print "we are now in sentence # ", (counter)
     x = 1

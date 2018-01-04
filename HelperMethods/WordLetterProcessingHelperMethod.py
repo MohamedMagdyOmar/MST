@@ -64,7 +64,7 @@ def reform_word_from(list_of_objects_of_chars_and_its_location):
     word = ""
     isPrevWasLast = False
     for each_char_object in list_of_objects_of_chars_and_its_location:
-        if each_char_object.location == 'oneCharWord':
+        if each_char_object.location == 'firstOneLetter':
             list_of_words.append(each_char_object.letter)
 
         elif each_char_object.location != 'last':
