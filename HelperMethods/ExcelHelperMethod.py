@@ -7,10 +7,10 @@ import WordLetterProcessingHelperMethod
 extension = 'csv'
 
 diacritization_error_excel_file_path = \
-    "E:\Repos\\35\\ff\\files\Book1.xls "
+    "D:\Repos\\results\ATB3\\5\\ff\\files\Book1.xls "
 
 diacritization_error_without_last_letter_excel_file_path = \
-    "E:\Repos\\35\\ff\\files\Book2.xls "
+    "D:\Repos\\results\ATB3\\5\\ff\\files\Book2.xls "
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()

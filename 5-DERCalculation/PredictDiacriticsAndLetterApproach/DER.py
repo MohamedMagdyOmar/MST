@@ -11,7 +11,7 @@ import glob
 from copy import deepcopy
 # actual = rnnop
 extension = 'csv'
-path = 'E:\Repos\\35\\ff\\files\\'
+path = 'D:\Repos\\results\ATB3\\5\\ff\\files\\'
 current_row_1 = 0
 current_row_2 = 0
 Total_Error = 0
@@ -24,8 +24,8 @@ if __name__ == "__main__":
     result = [i for i in glob.glob('*.{}'.format(extension))]
     current_sentence_counter = 0
 
-    if len(list_of_sentence_numbers) != len(result):
-        raise Exception('Mismatch In Number Of Sentences')
+   # if len(list_of_sentence_numbers) != len(result):
+   #     raise Exception('Mismatch In Number Of Sentences')
 
     for file_name, sentence_number in zip(result, list_of_sentence_numbers):
 
