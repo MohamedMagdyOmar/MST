@@ -107,7 +107,7 @@ def bind_words_with_sentence_number_in_this_doc(raw_data):
     global sentenceCount
     list_of_words_in_doc_and_corresponding_sentence_number = []
 
-    sentenceCount = 0
+
     wordCount = 0
     for eachVersus in raw_data:
         sentenceCount += 1
@@ -369,7 +369,7 @@ def push_data_into_db(doc, data_chars, list_of_words_and_corresponding_sentence_
                     (doc,
                      each_letter_object.undiacritizedCharacter,
                      each_letter_object.diacritizedCharacter,
-                     'testing',
+                     'training',
                      each_letter_object.sentenceNumber,
                      each_letter_object.diacritizedWord,
                      each_letter_object.encoded_input,
