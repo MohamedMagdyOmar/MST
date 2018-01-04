@@ -62,16 +62,25 @@ def remove_diacritics_from_this(character):
 def reform_word_from(list_of_objects_of_chars_and_its_location):
     list_of_words = []
     word = ""
+    isPrevWasLast = False
     for each_char_object in list_of_objects_of_chars_and_its_location:
         if each_char_object.location == 'oneCharWord':
             list_of_words.append(each_char_object.letter)
 
         elif each_char_object.location != 'last':
             word += each_char_object.letter
+            isPrevWasLast = False
+
+        elif isPrevWasLast and each_char_object.location == 'last':
+            word = each_char_object.letter
+            list_of_words.append(word)
+            isPrevWasLast = True
+            word = ""
 
         elif each_char_object.location == 'last':
             word += each_char_object.letter
             list_of_words.append(word)
+            isPrevWasLast = True
             word = ""
 
     return list_of_words
@@ -166,3 +175,17 @@ def get_chars_count_for_each_word_in_this(sentence):
         count = 0
 
     return chars_count_of_each_word
+
+
+def check_target_and_output_letters_are_same(op, target):
+    if len(op) != len(target):
+        raise Exception("Bug Appeared In check_target_and_output_letters_are_same")
+    required_list = []
+    for x in range(0, len(op)):
+        target_character = target[x][0]
+        for diacritics_index in range(1, len(op[x])):
+            target_character += op[x][diacritics_index]
+        required_list.append(target_character)
+
+    return required_list
+
