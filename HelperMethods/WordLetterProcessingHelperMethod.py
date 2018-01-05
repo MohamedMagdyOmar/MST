@@ -202,8 +202,10 @@ def clean_data_from_shadda_only(list_of_words):
                 else:
                     for x in range(0, len(each_word[0])):
                         if each_word[0][x] == u'\u0651':
-                            if (x + 1) <= len(each_word[0]):
-                                if each_word[0][(x + 1)] != u'\u064e' and \
+                            v = len(each_word[0])
+                            if (x + 1) < len(each_word[0]):
+                                try:
+                                    if each_word[0][(x + 1)] != u'\u064e' and \
                                                 each_word[0][(x + 1)] != u'\u064f' and \
                                                 each_word[0][(x + 1)] != u'\u0650' and \
                                                 each_word[0][(x + 1)] != u'\u064b' and \
@@ -211,11 +213,13 @@ def clean_data_from_shadda_only(list_of_words):
                                                 each_word[0][(x + 1)] != u'\u064d' and \
                                                 each_word[0][(x + 1)] != u'\u064e':
 
-                                    b = list(each_word[0])
-                                    b[x] = u'\u0651\u064e'
-                                    each_word[0] = "".join(b)
-                                    #each_word[0] = each_word[0].replace(each_word[0][x], u'\u0651\u064e')
-                                    v = 1
+                                        b = list(each_word[0])
+                                        b[x] = u'\u0651\u064e'
+                                        each_word[0] = "".join(b)
+                                        #each_word[0] = each_word[0].replace(each_word[0][x], u'\u0651\u064e')
+                                        v = 1
+                                except:
+                                    x = 1
 
                             else:
                                 b = list(each_word[0])
