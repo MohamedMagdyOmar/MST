@@ -87,7 +87,6 @@ def reform_word_from(list_of_objects_of_chars_and_its_location):
 
 
 def decompose_word_into_letters(word):
-
     decomposed_word = []
     inter_med_list = []
     found_flag = False
@@ -109,7 +108,6 @@ def decompose_word_into_letters(word):
 
 
 def decompose_diac_char_into_char_and_diacritics(diac_char):
-
     decomposed_char = []
 
     for each_letter in diac_char:
@@ -119,7 +117,6 @@ def decompose_diac_char_into_char_and_diacritics(diac_char):
 
 
 def normalize(word):
-
     locale.setlocale(locale.LC_ALL, "")
     for x in range(0, len(word)):
         word[x].sort(cmp=locale.strcoll)
@@ -128,7 +125,6 @@ def normalize(word):
 
 
 def convert_list_of_words_to_list_of_chars(list_of_words):
-
     found_flag = False
     overall = ""
     comp = ""
@@ -191,13 +187,38 @@ def check_target_and_output_letters_are_same(op, target):
 
 
 def clean_data_from_shadda_only(list_of_words):
-
     for each_word in list_of_words:
         if each_word[0] != 'bos' and each_word[0] != 'eos' and each_word[0] != 'space':
             if u'\u0651' in each_word[0]:
-                if u'\u0651\u064e' in each_word[0] or u'\u0651\u064f' in each_word[0] \
-                or u'\u0651\u0650' in each_word[0] or u'\u0651\u064b' in each_word[0] \
-                or u'\u0651\u064c' in each_word[0] or u'\u0651\u064f' in each_word[0]:
-                    x = 'do nothing'
+                if each_word[0].count(u'\u0651') == 1:
+
+                    if u'\u0651\u064e' in each_word[0] or u'\u0651\u064f' in each_word[0] \
+                            or u'\u0651\u0650' in each_word[0] or u'\u0651\u064b' in each_word[0] \
+                            or u'\u0651\u064c' in each_word[0] or u'\u0651\u064d' in each_word[0]:
+                        x = 'do nothing'
+                    else:
+                        each_word[0] = each_word[0].replace(u'\u0651', u'\u0651\u064e')
+
                 else:
-                    each_word[0] = each_word[0].replace(u'\u0651', u'\u0651\u064e')
+                    for x in range(0, len(each_word[0])):
+                        if each_word[0][x] == u'\u0651':
+                            if (x + 1) <= len(each_word[0]):
+                                if each_word[0][(x + 1)] != u'\u064e' and \
+                                                each_word[0][(x + 1)] != u'\u064f' and \
+                                                each_word[0][(x + 1)] != u'\u0650' and \
+                                                each_word[0][(x + 1)] != u'\u064b' and \
+                                                each_word[0][(x + 1)] != u'\u064c' and \
+                                                each_word[0][(x + 1)] != u'\u064d' and \
+                                                each_word[0][(x + 1)] != u'\u064e':
+
+                                    b = list(each_word[0])
+                                    b[x] = u'\u0651\u064e'
+                                    each_word[0] = "".join(b)
+                                    #each_word[0] = each_word[0].replace(each_word[0][x], u'\u0651\u064e')
+                                    v = 1
+
+                            else:
+                                b = list(each_word[0])
+                                b[x] = u'\u0651\u064e'
+                                each_word[0] = "".join(b)
+                                v = 1
