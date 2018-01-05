@@ -4,6 +4,7 @@ import unicodedata
 import MySQLdb
 import os
 import copy
+import WordLetterProcessingHelperMethod
 
 # 1 for atb3
 
@@ -369,7 +370,7 @@ def push_data_into_db(doc, data_chars, list_of_words_and_corresponding_sentence_
                     (doc,
                      each_letter_object.undiacritizedCharacter,
                      each_letter_object.diacritizedCharacter,
-                     'training',
+                     'testing',
                      each_letter_object.sentenceNumber,
                      each_letter_object.diacritizedWord,
                      each_letter_object.encoded_input,
@@ -397,6 +398,8 @@ if __name__ == "__main__":
         selected_doc, raw_data = read_doc(eachDoc, listOfFilesPaths, ListOfDocs)
         # cleaned_data = extract_and_clean_words_from_doc(raw_data)
         listOfWordsAndCorrespondingSentenceNumber = bind_words_with_sentence_number_in_this_doc(raw_data)
+        WordLetterProcessingHelperMethod.clean_data_from_shadda_only(listOfWordsAndCorrespondingSentenceNumber)
+
         listOfUndiacritizedWords = get_list_of_undiacritized_word_from_diacritized_word(
             copy.deepcopy(listOfWordsAndCorrespondingSentenceNumber))
 

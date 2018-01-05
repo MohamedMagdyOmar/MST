@@ -189,3 +189,15 @@ def check_target_and_output_letters_are_same(op, target):
 
     return required_list
 
+
+def clean_data_from_shadda_only(list_of_words):
+
+    for each_word in list_of_words:
+        if each_word[0] != 'bos' and each_word[0] != 'eos' and each_word[0] != 'space':
+            if u'\u0651' in each_word[0]:
+                if u'\u0651\u064e' in each_word[0] or u'\u0651\u064f' in each_word[0] \
+                or u'\u0651\u0650' in each_word[0] or u'\u0651\u064b' in each_word[0] \
+                or u'\u0651\u064c' in each_word[0] or u'\u0651\u064f' in each_word[0]:
+                    x = 'do nothing'
+                else:
+                    each_word[0] = each_word[0].replace(u'\u0651', u'\u0651\u064e')
