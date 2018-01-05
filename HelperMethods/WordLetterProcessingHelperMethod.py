@@ -188,6 +188,8 @@ def check_target_and_output_letters_are_same(op, target):
 
 def clean_data_from_shadda_only(list_of_words):
     for each_word in list_of_words:
+        if each_word[0] == u'الصّالِحِيّ' or each_word[0] == u'السَّامَرَّائِيّ' or each_word[0] == u'التَّشِيلِيانِيّ':
+            x = 1
         if each_word[0] != 'bos' and each_word[0] != 'eos' and each_word[0] != 'space':
             if u'\u0651' in each_word[0]:
                 if each_word[0].count(u'\u0651') == 1:
@@ -200,7 +202,10 @@ def clean_data_from_shadda_only(list_of_words):
                         each_word[0] = each_word[0].replace(u'\u0651', u'\u0651\u064e')
 
                 else:
-                    for x in range(0, len(each_word[0])):
+                    length_of_array = len(each_word[0])
+                    x = 0
+                    while x < length_of_array:
+                    # for x in range(0, length_of_array):
                         if each_word[0][x] == u'\u0651':
                             v = len(each_word[0])
                             if (x + 1) < len(each_word[0]):
@@ -216,6 +221,7 @@ def clean_data_from_shadda_only(list_of_words):
                                         b = list(each_word[0])
                                         b[x] = u'\u0651\u064e'
                                         each_word[0] = "".join(b)
+                                        length_of_array += 1
                                         #each_word[0] = each_word[0].replace(each_word[0][x], u'\u0651\u064e')
                                         v = 1
                                 except:
@@ -225,4 +231,6 @@ def clean_data_from_shadda_only(list_of_words):
                                 b = list(each_word[0])
                                 b[x] = u'\u0651\u064e'
                                 each_word[0] = "".join(b)
+                                length_of_array += 1
                                 v = 1
+                        x += 1
