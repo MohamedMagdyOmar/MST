@@ -50,8 +50,7 @@ def execute_unchanged_sql_queries():
     global listOfUnDiacritizedCharacter
     listOfUnDiacritizedCharacter = cur.fetchall()
 
-    # use this if you are going to predict character and diacritics
-    listOfDiacritizedCharacterQuery = "select * from DiacOneHotEncoding "
+    listOfDiacritizedCharacterQuery = "select * from diacritics_and_undiacritized_letter_one_hot_encoding "
     cur.execute(listOfDiacritizedCharacterQuery)
     global listOfDiacritizedCharacter
     listOfDiacritizedCharacter = cur.fetchall()
@@ -86,14 +85,12 @@ def create_netcdf_label():
     print "create_netcdf_label takes : ", execute_create_netcdf_label_end_time - execute_create_netcdf_label_start_time
 
 
-def get_selected_letters_in_this_loop(): #(start_range, end_range):
+def get_selected_letters_in_this_loop():
     execute_get_selected_letters_in_this_loop_start_time = datetime.datetime.now()
 
     global selected_letters_in_this_loop
     selected_letters_in_this_loop = []
 
-    # selected_letters_in_this_loop = [eachRow for eachRow in listOfSelectedLettersAndSentences if
-    #                                 int(start_range) <= int(eachRow[3]) < int(end_range)]
     selected_letters_in_this_loop = listOfSelectedLettersAndSentences
     # selected_letters_in_this_loop = y
     execute_get_selected_letters_in_this_loop_end_time = datetime.datetime.now()
@@ -159,14 +156,14 @@ def create_netcdf_seq_length():
                 seq_lengths.append(letterCounterForEachSentence)
                 prev = sentenceNumber
                 sentenceNumber = selected_letters_in_this_loop[eachItem][3]
-                print (int(sentenceNumber) - int(prev))
+
                 letterCounterForEachSentence = 1
                 if (int(sentenceNumber) - int(prev)) == 2:
                     x = 1
         except:
             x = 1
 
-    seq_lengths.append(letterCounterForEachSentence) #hereeeeeeeeeeeeeeeeeeeeeeeeeee
+    seq_lengths.append(letterCounterForEachSentence)
 
     execute_create_netcdf_seq_length_end_time = datetime.datetime.now()
     print "createNetCDFSeqLength takes : ", execute_create_netcdf_seq_length_end_time - execute_create_netcdf_seq_length_start_time
@@ -185,10 +182,35 @@ def create_netcdf_target_classes():
 
         decomposed_letter = WordLetterProcessingHelperMethod.decompose_diac_char_into_char_and_diacritics(yourLabel)
         if len(decomposed_letter) == 2 and decomposed_letter[1] == u'ّ':
+            # shadda and fatha
             decomposed_letter[1] = u'َّ'
             letter.append(decomposed_letter[0])
             diacritics.append(decomposed_letter[1])
             yourLabel = WordLetterProcessingHelperMethod.attach_diacritics_to_chars(letter, diacritics)[0]
+
+        if len(decomposed_letter) == 2 and decomposed_letter[1] == u'ْ':
+            # sukun case
+            decomposed_letter[1] = u'ْ'
+            letter.append(decomposed_letter[0])
+            diacritics.append(decomposed_letter[1])
+            yourLabel = decomposed_letter[0]
+
+        elif len(decomposed_letter) == 2:
+            letter.append(decomposed_letter[0])
+            diacritics.append(decomposed_letter[1])
+            yourLabel = decomposed_letter[1]
+        elif len(decomposed_letter) > 3:
+            x = 1
+        elif len(decomposed_letter) > 2:
+            letter.append(decomposed_letter[0])
+            diacritics.append(decomposed_letter[1])
+            yourLabel = decomposed_letter[1] + decomposed_letter[2]
+            x = 1
+
+        elif len(decomposed_letter) == 1:
+            letter.append(decomposed_letter[0])
+            diacritics.append(u'')
+            yourLabel = decomposed_letter[0]
 
         while OneHotTargetClassNotFound:
             try:
@@ -199,7 +221,7 @@ def create_netcdf_target_classes():
                 else:
                     searchCounter += 1
             except:
-                x = 1
+                raise Exception("label not found")
     afterWhileLoop = datetime.datetime.now()
     print "While Loop takes : ", afterWhileLoop - beforeWhileLoop
 
@@ -303,7 +325,7 @@ def try_using_query(letter):
 
 
 if __name__ == "__main__":
-    availableDataSetTypes = ['training']
+    availableDataSetTypes = ['testing']
     columnNumberOf_SentenceNumber = 3
 
     create_mysql_connection()
