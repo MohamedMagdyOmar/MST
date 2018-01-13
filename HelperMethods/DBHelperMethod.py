@@ -100,6 +100,19 @@ def get_available_diacritized_chars():
     return diacritized_chars
 
 
+def get_available_diacritics_and_un_diacritized_chars():
+
+    connect_to_db()
+    get_available_diacritized_chars_query = "select label from diacritics_and_undiacritized_letter_one_hot_encoding"
+
+    cur.execute(get_available_diacritized_chars_query)
+
+    diacritized_chars = cur.fetchall()
+    diacritized_chars = [eachTuple[0] for eachTuple in diacritized_chars]
+
+    return diacritized_chars
+
+
 def get_un_diacritized_words_from(sentence_number, sentence_type):
 
     connect_to_db()

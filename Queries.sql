@@ -3,6 +3,7 @@ select * from parseddocument;
 select * from encodedwords;
 select * from listofwordsandsentencesineachdoc;
 select * from undiaconehotencoding;
+select * from diacritics_and_undiacritized_letter_one_hot_encoding;
 select * from diaconehotencoding;
 select * from distinctdiacritics;
 select * from alldiacriticsinalldocuments;
@@ -10,8 +11,8 @@ select * from dictionary;
 select * from arabic_letters_without_diacritics;
 select * from arabic_letters_with_diacritics;
 select * from arabic_diacritics;
-
-select * from parseddocument where Diacritics = 'َّ' and location = 'middle'
+select * from arabic_letters_and_diacritics;
+select * from parseddocument where Diacritics = 'َّ' and location = 'middle';
 
 SELECT m1.*
 FROM parseddocument m1 LEFT JOIN parseddocument m2
@@ -22,16 +23,17 @@ WHERE m2.idCharacterNumber IS NULL;
 -- Conditional Selection
 
 -- Parsed Table
-select * from parseddocument where   LetterType='training' and SentenceNumber=3311 ;
+select * from parseddocument where   LetterType='training' and SentenceNumber=1646 ;
+select * from parseddocument where   LetterType='training' and Diacritics = '' ;
 select * from parseddocument where   LetterType='validation';
-select  * from parseddocument where LetterType='testing';
-select * from parseddocument where LetterType='testing';
+select  * from parseddocument where LetterType='testing' and DiacritizedCharacter = 'تّ' and SentenceNumber=1 and DocName = 'ANN20021015.0101.txt';
+select * from parseddocument where LetterType='testing' and SentenceNumber = 1;
 
 -- this represent alef when it is found above character, this is found only in atb3
 select  * from parseddocument where Diacritics= 'ٰ';
 select  * from parseddocument where UnDiacritizedCharacter= 'ـ';
 select  * from parseddocument where Diacritics= 'ًً';
-select distinct SentenceNumber from parseddocument where LetterType = 'testing'
+select distinct SentenceNumber from parseddocument where LetterType = 'testing';
 
 select *from parseddocument where location = 'last' and DiacritizedCharacter = 'آ';
 -- shadda error in atb3

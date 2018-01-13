@@ -241,3 +241,13 @@ def clean_data_from_shadda_only(list_of_words):
 def append_neuron_op_value(actual_list, neuron_op_value):
     for each_object, each_neuron_value in zip(actual_list, neuron_op_value):
         each_object.value = each_neuron_value
+
+
+def append_diacritics_with_un_diacritized_char(rnn_op, rnn_input):
+    if len(rnn_op) != len(rnn_input):
+        raise Exception("error appeared in append_diacritics_with_un_diacritized_char")
+
+    for each_op, each_input in zip(rnn_op, rnn_input):
+        if each_op != each_input:
+            diac_char = each_op + each_input
+            each_op.letter = diac_char
