@@ -2,11 +2,15 @@
 
 def get_neurons_numbers_with_highest_output_value(csv_file_op):
     list_of_neurons_indices_with_highest_value = []
+    list_of_neurons_actual_op_values = []
     # Take care !!!, that the array is zero index
     for row in csv_file_op:
         list_of_neurons_indices_with_highest_value.append(row.index(max(row)))
+        list_of_neurons_actual_op_values.append(max(row))
+    if len(list_of_neurons_indices_with_highest_value) != len(list_of_neurons_actual_op_values):
+        raise Exception("Bug Appeared in this Function")
 
-    return list_of_neurons_indices_with_highest_value
+    return list_of_neurons_indices_with_highest_value, list_of_neurons_actual_op_values
 
 
 def deduce_from_rnn_op_predicted_chars(list_of_all_diacritized_letters, neurons_locations_with_highest_output):

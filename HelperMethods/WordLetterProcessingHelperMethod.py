@@ -6,11 +6,13 @@ from copy import deepcopy
 
 class LetterPosition:
     letter = "",
-    location = ""
+    location = "",
+    value = ""
 
     def __init__(self):
         self.letter = ""
         self.location = ""
+        self.value = ""
 
 
 def get_location_of_each_char(list_of_chars, chars_count_for_each_word):
@@ -234,3 +236,8 @@ def clean_data_from_shadda_only(list_of_words):
                                 length_of_array += 1
                                 v = 1
                         x += 1
+
+
+def append_neuron_op_value(actual_list, neuron_op_value):
+    for each_object, each_neuron_value in zip(actual_list, neuron_op_value):
+        each_object.value = each_neuron_value

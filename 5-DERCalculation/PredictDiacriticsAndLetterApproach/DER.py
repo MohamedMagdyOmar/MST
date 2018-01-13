@@ -11,7 +11,7 @@ import glob
 from copy import deepcopy
 # actual = rnnop
 extension = 'csv'
-path = 'D:\Repos\\results\ATB3\\5\\ff\\files\\'
+path = 'D:\Repos\\results\ATB3\\5\\new\\ff\\files\\'
 current_row_1 = 0
 current_row_2 = 0
 Total_Error = 0
@@ -32,7 +32,7 @@ if __name__ == "__main__":
         selected_sentence = DBHelperMethod.get_sentence_by(sentence_number)
 
         rnn_output = ExcelHelperMethod.read_rnn_op_csv_file(path + file_name)
-        neurons_with_highest_probability = RNNOPProcessingHelperMethod.get_neurons_numbers_with_highest_output_value(rnn_output)
+        neurons_with_highest_probability, neurons_op_value = RNNOPProcessingHelperMethod.get_neurons_numbers_with_highest_output_value(rnn_output)
 
         list_of_available_diac_chars = DBHelperMethod.get_available_diacritized_chars()
         RNN_Predicted_Diac_Chars = RNNOPProcessingHelperMethod.\
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             x = 1
         RNN_Predicted_Chars_Count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(selected_sentence)
         RNN_Predicted_Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(RNN_Predicted_Diac_Chars, RNN_Predicted_Chars_Count)
-
+        WordLetterProcessingHelperMethod.append_neuron_op_value(RNN_Predicted_Chars_And_Its_Location, neurons_op_value)
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
         RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))

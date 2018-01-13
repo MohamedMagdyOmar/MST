@@ -7,10 +7,10 @@ import WordLetterProcessingHelperMethod
 extension = 'csv'
 
 diacritization_error_excel_file_path = \
-    "D:\Repos\\results\ATB3\\5\\ff\\files\Book1.xls "
+    "D:\Repos\\results\ATB3\\5\\new\\ff\\des\Book1.xls "
 
 diacritization_error_without_last_letter_excel_file_path = \
-    "D:\Repos\\results\ATB3\\5\\ff\\files\Book2.xls "
+    "D:\Repos\\results\ATB3\\5\\new\\ff\\des\Book2.xls "
 
 workbook = xlsxwriter.Workbook(diacritization_error_excel_file_path)
 worksheet = workbook.add_worksheet()
@@ -20,6 +20,7 @@ worksheet.write(0, 2, 'Error Location')
 worksheet.write(0, 3, 'word contain error')
 worksheet.write(0, 4, 'location')
 worksheet.write(0, 5, 'sentence')
+worksheet.write(0, 6, 'value')
 workbook.close()
 
 workbook2 = xlsxwriter.Workbook(diacritization_error_without_last_letter_excel_file_path)
@@ -30,6 +31,7 @@ worksheet2.write(0, 2, 'Error Location')
 worksheet2.write(0, 3, 'word contain error')
 worksheet2.write(0, 4, 'location')
 worksheet2.write(0, 5, 'sentence')
+worksheet2.write(0, 6, 'value')
 workbook2.close()
 
 
@@ -76,6 +78,9 @@ def write_data_into_excel_file(errors, current_sentence, current_row_in_excel_fi
             column = 5
             worksheet.write(current_row_in_excel_file, column, all_sentence)
 
+            column = 6
+            worksheet.write(current_row_in_excel_file, column, each_object.actual_letter.value)
+
             current_row_in_excel_file += 1
             column = 0
 
@@ -116,6 +121,9 @@ def write_data_into_excel_file2(errors, current_sentence, current_row_in_excel_f
 
         column = 5
         worksheet2.write(current_row_in_excel_file, column, all_sentence)
+
+        column = 6
+        worksheet2.write(current_row_in_excel_file, column, each_object.actual_letter.value)
 
         current_row_in_excel_file += 1
         column = 0
