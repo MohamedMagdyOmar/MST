@@ -11,7 +11,7 @@ import glob
 from copy import deepcopy
 # actual = rnnop
 extension = 'csv'
-path = 'D:\Repos\\results\ATB3\\5\\new\\ff\\filespopo\\'
+path = 'D:\Repos\\results\\41\\ff\\files\\'
 current_row_1 = 0
 current_row_2 = 0
 Total_Error = 0
@@ -42,14 +42,16 @@ if __name__ == "__main__":
         # Expected OP
         OP_Diac_Chars = DBHelperMethod.get_diacritized_chars_by(sentence_number, type)
 
-        RNN_Predicted_Diac_Chars = WordLetterProcessingHelperMethod.check_target_and_output_letters_are_same(deepcopy(RNN_Predicted_Diac_Chars), OP_Diac_Chars)
+        # RNN_Predicted_Diac_Chars = WordLetterProcessingHelperMethod.check_target_and_output_letters_are_same(deepcopy(RNN_Predicted_Diac_Chars), OP_Diac_Chars)
 
         RNN_Predicted_Chars_Count = WordLetterProcessingHelperMethod.get_chars_count_for_each_word_in_this(selected_sentence)
         RNN_Predicted_Chars_And_Its_Location = WordLetterProcessingHelperMethod.get_location_of_each_char(RNN_Predicted_Diac_Chars, RNN_Predicted_Chars_Count)
 
         WordLetterProcessingHelperMethod.append_neuron_op_value(RNN_Predicted_Chars_And_Its_Location, neurons_op_value)
         # check below line
-        WordLetterProcessingHelperMethod.append_diacritics_with_un_diacritized_char(RNN_Predicted_Chars_And_Its_Location, rnn_input)
+        if counter == 36:
+            x = 1
+        WordLetterProcessingHelperMethod.append_diacritics_with_un_diacritized_char(RNN_Predicted_Chars_And_Its_Location, rnn_input, list_of_available_diac_chars)
         # Post Processing
         RNN_Predicted_Chars_After_Sukun = SukunCorrection.sukun_correction(deepcopy(RNN_Predicted_Chars_And_Its_Location))
         RNN_Predicted_Chars_After_Fatha = FathaCorrection.fatha_correction(deepcopy(RNN_Predicted_Chars_After_Sukun))
