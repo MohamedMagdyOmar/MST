@@ -243,11 +243,15 @@ def append_neuron_op_value(actual_list, neuron_op_value):
         each_object.value = each_neuron_value
 
 
-def append_diacritics_with_un_diacritized_char(rnn_op, rnn_input):
+def append_diacritics_with_un_diacritized_char(rnn_op, rnn_input, available_neuron_input):
     if len(rnn_op) != len(rnn_input):
         raise Exception("error appeared in append_diacritics_with_un_diacritized_char")
 
+    letters = available_neuron_input[0:36]
     for each_op, each_input in zip(rnn_op, rnn_input):
-        if each_op != each_input:
-            diac_char = each_op + each_input
-            each_op.letter = diac_char
+        if each_op.letter != each_input:
+            if each_op.letter in letters and each_input in letters:
+                each_op.letter = each_input
+            else:
+                diac_char = each_input + each_op.letter
+                each_op.letter = diac_char
